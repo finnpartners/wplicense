@@ -1,17 +1,13 @@
 import { PageHeader } from "@/components/layout/AppLayout";
 import { useGetDashboard } from "@workspace/api-client-react";
-import { Users, Package, Key, ShieldCheck } from "lucide-react";
+import { Users, Package, Key, ShieldCheck, type LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ResponsiveContainer, AreaChart, Area } from "recharts";
 
-// Minimal decorative chart for aesthetic "premium" feel
-const dummyData = Array.from({ length: 7 }).map((_, i) => ({ value: 10 + Math.random() * 40 }));
-
-function StatCard({ title, value, icon: Icon, colorClass, gradient }: { title: string, value: number, icon: any, colorClass: string, gradient: string }) {
+function StatCard({ title, value, icon: Icon, colorClass }: { title: string; value: number; icon: LucideIcon; colorClass: string }) {
   return (
-    <Card className="relative overflow-hidden group">
-      <div className="p-6 relative z-10">
+    <Card className="relative overflow-hidden">
+      <div className="p-6">
         <div className="flex justify-between items-start mb-6">
           <div className={cn("p-3 rounded-2xl", colorClass)}>
             <Icon className="w-6 h-6" />
@@ -21,20 +17,6 @@ function StatCard({ title, value, icon: Icon, colorClass, gradient }: { title: s
           <div className="text-4xl font-display font-bold text-slate-900 mb-1">{value}</div>
           <div className="text-sm font-medium text-slate-500 uppercase tracking-wider">{title}</div>
         </div>
-      </div>
-      {/* Decorative background chart */}
-      <div className="absolute inset-x-0 bottom-0 h-24 opacity-20 pointer-events-none transition-opacity group-hover:opacity-40">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={dummyData}>
-            <defs>
-              <linearGradient id={title.replace(/\s+/g, '')} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="currentColor" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <Area type="monotone" dataKey="value" stroke="none" fill={`url(#${title.replace(/\s+/g, '')})`} className={gradient} />
-          </AreaChart>
-        </ResponsiveContainer>
       </div>
     </Card>
   );
@@ -65,28 +47,24 @@ export default function Dashboard() {
           value={data?.clientCount || 0} 
           icon={Users} 
           colorClass="bg-blue-100 text-blue-600"
-          gradient="text-blue-500"
         />
         <StatCard 
           title="Products" 
           value={data?.productCount || 0} 
           icon={Package} 
           colorClass="bg-fuchsia-100 text-fuchsia-600"
-          gradient="text-fuchsia-500"
         />
         <StatCard 
           title="Total Licenses" 
           value={data?.licenseCount || 0} 
           icon={Key} 
           colorClass="bg-indigo-100 text-indigo-600"
-          gradient="text-indigo-500"
         />
         <StatCard 
           title="Active Licenses" 
           value={data?.activeLicenseCount || 0} 
           icon={ShieldCheck} 
           colorClass="bg-emerald-100 text-emerald-600"
-          gradient="text-emerald-500"
         />
       </div>
 
