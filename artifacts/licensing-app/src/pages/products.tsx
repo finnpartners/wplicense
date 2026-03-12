@@ -275,7 +275,7 @@ function ImportGitHubDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg overflow-hidden">
         <DialogHeader>
           <DialogTitle>Import from GitHub</DialogTitle>
         </DialogHeader>
