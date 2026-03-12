@@ -37,7 +37,9 @@ function isUserAuthorized(email: string, oid: string): boolean {
 }
 
 router.get("/auth/sso-status", (_req, res) => {
-  res.json({ ssoEnabled: isAzureConfigured() });
+  const ssoEnabled = isAzureConfigured();
+  const devLoginEnabled = !ssoEnabled && process.env.NODE_ENV !== "production";
+  res.json({ ssoEnabled, devLoginEnabled });
 });
 
 router.get("/auth/login", (req, res) => {
@@ -125,6 +127,33 @@ router.get("/auth/callback", async (req, res) => {
     console.error("Auth callback error:", err);
     res.status(500).send("Authentication failed. Please try again.");
   }
+});
+
+router.post("/auth/dev-login", async (req, res) => {
+  if (process.env.NODE_ENV === "production" || isAzureConfigured()) {
+    res.status(403).json({ message: "Dev login is not available in this environment." });
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  req.session.userId = "dev-user";
+  req.session.userEmail = "dev@localhost";
+  req.session.userName = "Developer";
+
+  await new Promise<void>((resolve, reject) => {
+    req.session.save((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  res.json({ success: true });
 });
 
 router.get("/auth/me", async (req, res) => {

@@ -3,18 +3,34 @@ import { useEffect, useState } from "react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+interface AuthStatus {
+  ssoEnabled: boolean;
+  devLoginEnabled: boolean;
+}
+
 export default function Login() {
-  const [ssoEnabled, setSsoEnabled] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<AuthStatus | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch(`${BASE}/api/auth/sso-status`, { credentials: "include" })
       .then((res) => res.json())
-      .then((data) => setSsoEnabled(data.ssoEnabled))
-      .catch(() => setSsoEnabled(false));
+      .then((data) => setStatus(data))
+      .catch(() => setError(true));
   }, []);
 
   const handleLogin = () => {
     window.location.href = `${BASE}/api/auth/login?redirect=/dashboard`;
+  };
+
+  const handleDevLogin = async () => {
+    const res = await fetch(`${BASE}/api/auth/dev-login`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (res.ok) {
+      window.location.href = `${BASE}/dashboard`;
+    }
   };
 
   return (
@@ -31,13 +47,13 @@ export default function Login() {
         <h2 className="text-3xl font-display font-bold text-slate-950 mb-2 text-center">FINN Licensing</h2>
         <p className="text-slate-500 mb-8 text-center">Sign in with your organization account</p>
 
-        {ssoEnabled === null && (
+        {!status && !error && (
           <div className="flex justify-center py-4">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
           </div>
         )}
 
-        {ssoEnabled === true && (
+        {status?.ssoEnabled && (
           <Button onClick={handleLogin} className="w-full text-base h-12 gap-3" variant="default">
             <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
               <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
@@ -49,9 +65,24 @@ export default function Login() {
           </Button>
         )}
 
-        {ssoEnabled === false && (
+        {status && !status.ssoEnabled && status.devLoginEnabled && (
+          <div className="space-y-4">
+            <Button
+              onClick={handleDevLogin}
+              className="w-full text-base h-12 gap-3"
+              variant="default"
+            >
+              Continue as Developer
+            </Button>
+            <p className="text-center text-xs text-slate-400">
+              Development mode — SSO is disabled. Azure SSO will be required on the live domain.
+            </p>
+          </div>
+        )}
+
+        {(error || (status && !status.ssoEnabled && !status.devLoginEnabled)) && (
           <div className="text-center text-sm text-slate-500 bg-slate-50 rounded-xl p-4 border border-slate-200">
-            SSO is not available in this environment. Deploy to your live domain to enable sign-in.
+            Sign-in is not available. Please contact your administrator.
           </div>
         )}
 

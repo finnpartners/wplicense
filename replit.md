@@ -29,7 +29,7 @@ Full-stack web application for managing WordPress plugin licenses. Built with Re
 - Public API at `/api/*` for license validation, update checks, and download proxy
 - Rate limiting on validation endpoint (60 req/hr per IP)
 - Domain normalization (strips scheme, www, trailing slashes)
-- Azure AD SSO login (no local passwords)
+- Azure AD SSO login (no local passwords); dev bypass login when SSO is unconfigured (non-production only)
 
 ## Environment Variables
 
@@ -101,9 +101,10 @@ artifacts-monorepo/
 ## API Routes
 
 ### Auth (Azure AD SSO)
-- `GET /api/auth/sso-status` — Returns `{ ssoEnabled: boolean }` based on Azure env var availability
+- `GET /api/auth/sso-status` — Returns `{ ssoEnabled, devLoginEnabled }` based on Azure env vars and environment
 - `GET /api/auth/login` — Redirects to Azure AD authorize endpoint (503 if SSO not configured)
 - `GET /api/auth/callback` — Handles Azure AD callback, creates session (503 if SSO not configured)
+- `POST /api/auth/dev-login` — Dev-only session bypass (403 in production or when SSO is configured)
 - `POST /api/auth/logout` — Destroy session
 - `GET /api/auth/me` — Get current user (id, email, name)
 
