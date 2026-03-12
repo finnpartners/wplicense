@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { licensesTable, clientsTable } from "@workspace/db/schema";
+import type { License } from "@workspace/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { CreateLicenseBody, UpdateLicenseBody, GetLicenseParams, UpdateLicenseParams, DeleteLicenseParams, ToggleLicenseParams } from "@workspace/api-zod";
@@ -8,7 +9,7 @@ import { normaliseDomain } from "../lib/domain";
 
 const router: IRouter = Router();
 
-function formatLicense(license: any, clientName?: string | null) {
+function formatLicense(license: Pick<License, "id" | "licenseKey" | "clientId" | "domain" | "pluginAccess" | "productIds" | "status" | "createdAt">, clientName?: string | null) {
   return {
     id: license.id,
     licenseKeyPreview: license.licenseKey.substring(0, 8) + "...",

@@ -78,7 +78,8 @@ export async function pollProduct(productId: number): Promise<{ success: boolean
     }).where(eq(productsTable.id, productId));
 
     return { success: true, message: `Updated to version ${version}` };
-  } catch (err: any) {
-    return { success: false, message: err.message || "Unknown error" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { success: false, message };
   }
 }
