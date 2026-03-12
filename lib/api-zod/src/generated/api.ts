@@ -232,6 +232,28 @@ export const DeleteProductResponse = zod.object({
 });
 
 /**
+ * @summary List all releases for a product
+ */
+export const ListProductReleasesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListProductReleasesResponseItem = zod.object({
+  id: zod.number(),
+  productId: zod.number(),
+  version: zod.string(),
+  tagName: zod.string(),
+  changelog: zod.string().nullish(),
+  downloadUrl: zod.string().nullish(),
+  zipballUrl: zod.string().nullish(),
+  publishedAt: zod.date().nullish(),
+  createdAt: zod.date(),
+});
+export const ListProductReleasesResponse = zod.array(
+  ListProductReleasesResponseItem,
+);
+
+/**
  * @summary Poll GitHub for latest release
  */
 export const PollProductParams = zod.object({
@@ -421,14 +443,17 @@ export const PublicProductsHeader = zod.object({
   Authorization: zod.string(),
 });
 
-export const PublicProductsResponseItem = zod.object({
-  id: zod.string(),
-  name: zod.string(),
-  slug: zod.string(),
-  version: zod.string().nullish(),
-  description: zod.string().nullish(),
+export const PublicProductsResponse = zod.object({
+  data: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      slug: zod.string(),
+      version: zod.string().nullish(),
+      description: zod.string().nullish(),
+    }),
+  ),
 });
-export const PublicProductsResponse = zod.array(PublicProductsResponseItem);
 
 /**
  * @summary Check for updates
@@ -441,11 +466,11 @@ export const PublicUpdateCheckQueryParams = zod.object({
 
 export const PublicUpdateCheckResponse = zod.object({
   version: zod.string().nullish(),
-  downloadUrl: zod.string().nullish(),
+  download_url: zod.string().nullish(),
   slug: zod.string().nullish(),
   tested: zod.string().nullish(),
   requires: zod.string().nullish(),
-  requiresPhp: zod.string().nullish(),
+  requires_php: zod.string().nullish(),
   sections: zod
     .object({
       changelog: zod.string().optional(),

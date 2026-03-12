@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { PageHeader } from "@/components/layout/AppLayout";
@@ -21,6 +22,7 @@ const productSchema = z.object({
 type ProductForm = z.infer<typeof productSchema>;
 
 export default function Products() {
+  const [, navigate] = useLocation();
   const { data: products, isLoading } = useListProducts();
   const { create, update, remove, poll } = useProductMutations();
   
@@ -89,8 +91,13 @@ export default function Products() {
             {products?.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>
-                  <div className="font-semibold text-slate-900">{product.name}</div>
-                  <div className="text-xs text-slate-500 font-mono mt-0.5">{product.slug}</div>
+                  <button
+                    onClick={() => navigate(`/products/${product.id}`)}
+                    className="text-left hover:underline"
+                  >
+                    <div className="font-semibold text-slate-900">{product.name}</div>
+                    <div className="text-xs text-slate-500 font-mono mt-0.5">{product.slug}</div>
+                  </button>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5 text-sm text-slate-600">

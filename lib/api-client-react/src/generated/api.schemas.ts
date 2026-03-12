@@ -175,19 +175,35 @@ export interface PublicProduct {
   description?: string | null;
 }
 
+export interface Release {
+  id: number;
+  productId: number;
+  version: string;
+  tagName: string;
+  changelog?: string | null;
+  downloadUrl?: string | null;
+  zipballUrl?: string | null;
+  publishedAt?: string | null;
+  createdAt: string;
+}
+
 export type UpdateCheckResponseSections = {
   changelog?: string;
 } | null;
 
 export interface UpdateCheckResponse {
   version?: string | null;
-  downloadUrl?: string | null;
+  download_url?: string | null;
   slug?: string | null;
   tested?: string | null;
   requires?: string | null;
-  requiresPhp?: string | null;
+  requires_php?: string | null;
   sections?: UpdateCheckResponseSections;
 }
+
+export type PublicProducts200 = {
+  data: PublicProduct[];
+};
 
 export type PublicUpdateCheckParams = {
   product_id: string;

@@ -337,6 +337,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/products/{id}/releases:
+    get:
+      operationId: listProductReleases
+      tags: [products]
+      summary: List all releases for a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Release list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Release"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /admin/products/{id}/poll:
     post:
       operationId: pollProduct
@@ -1021,6 +1048,40 @@ components:
         - id
         - name
         - slug
+
+    Release:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        version:
+          type: string
+        tagName:
+          type: string
+        changelog:
+          type: string
+          nullable: true
+        downloadUrl:
+          type: string
+          nullable: true
+        zipballUrl:
+          type: string
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - productId
+        - version
+        - tagName
+        - createdAt
 
     UpdateCheckResponse:
       type: object

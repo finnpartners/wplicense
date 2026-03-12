@@ -9,6 +9,7 @@ import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import Products from "@/pages/products";
+import ProductDetail from "@/pages/product-detail";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
@@ -50,6 +51,9 @@ function Router() {
       </Route>
       <Route path="/clients">
         <AuthGuard><Clients /></AuthGuard>
+      </Route>
+      <Route path="/products/:id">
+        <AuthGuard><ProductDetail /></AuthGuard>
       </Route>
       <Route path="/products">
         <AuthGuard><Products /></AuthGuard>

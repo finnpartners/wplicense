@@ -32,9 +32,10 @@ import type {
   Product,
   ProductInput,
   PublicDownloadParams,
-  PublicProduct,
+  PublicProducts200,
   PublicStatus,
   PublicUpdateCheckParams,
+  Release,
   Settings,
   SettingsInput,
   UpdateCheckResponse,
@@ -1266,6 +1267,93 @@ export const useDeleteProduct = <
 };
 
 /**
+ * @summary List all releases for a product
+ */
+export const getListProductReleasesUrl = (id: number) => {
+  return `/api/admin/products/${id}/releases`;
+};
+
+export const listProductReleases = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Release[]> => {
+  return customFetch<Release[]>(getListProductReleasesUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListProductReleasesQueryKey = (id: number) => {
+  return [`/api/admin/products/${id}/releases`] as const;
+};
+
+export const getListProductReleasesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listProductReleases>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listProductReleases>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListProductReleasesQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listProductReleases>>
+  > = ({ signal }) => listProductReleases(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listProductReleases>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListProductReleasesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listProductReleases>>
+>;
+export type ListProductReleasesQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List all releases for a product
+ */
+
+export function useListProductReleases<
+  TData = Awaited<ReturnType<typeof listProductReleases>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listProductReleases>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListProductReleasesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Poll GitHub for latest release
  */
 export const getPollProductUrl = (id: number) => {
@@ -2096,7 +2184,7 @@ export const useRegenerateApiKey = <
  * @summary Public status check
  */
 export const getPublicStatusUrl = () => {
-  return `/api/finn/v1/status`;
+  return `/api/status`;
 };
 
 export const publicStatus = async (
@@ -2109,7 +2197,7 @@ export const publicStatus = async (
 };
 
 export const getPublicStatusQueryKey = () => {
-  return [`/api/finn/v1/status`] as const;
+  return [`/api/status`] as const;
 };
 
 export const getPublicStatusQueryOptions = <
@@ -2171,7 +2259,7 @@ export function usePublicStatus<
  * @summary Validate a license
  */
 export const getPublicValidateUrl = () => {
-  return `/api/finn/v1/validate`;
+  return `/api/validate`;
 };
 
 export const publicValidate = async (
@@ -2257,20 +2345,20 @@ export const usePublicValidate = <
  * @summary List available products
  */
 export const getPublicProductsUrl = () => {
-  return `/api/finn/v1/products`;
+  return `/api/products`;
 };
 
 export const publicProducts = async (
   options?: RequestInit,
-): Promise<PublicProduct[]> => {
-  return customFetch<PublicProduct[]>(getPublicProductsUrl(), {
+): Promise<PublicProducts200> => {
+  return customFetch<PublicProducts200>(getPublicProductsUrl(), {
     ...options,
     method: "GET",
   });
 };
 
 export const getPublicProductsQueryKey = () => {
-  return [`/api/finn/v1/products`] as const;
+  return [`/api/products`] as const;
 };
 
 export const getPublicProductsQueryOptions = <
@@ -2343,8 +2431,8 @@ export const getPublicUpdateCheckUrl = (params: PublicUpdateCheckParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/finn/v1/update-check?${stringifiedParams}`
-    : `/api/finn/v1/update-check`;
+    ? `/api/update-check?${stringifiedParams}`
+    : `/api/update-check`;
 };
 
 export const publicUpdateCheck = async (
@@ -2360,7 +2448,7 @@ export const publicUpdateCheck = async (
 export const getPublicUpdateCheckQueryKey = (
   params?: PublicUpdateCheckParams,
 ) => {
-  return [`/api/finn/v1/update-check`, ...(params ? [params] : [])] as const;
+  return [`/api/update-check`, ...(params ? [params] : [])] as const;
 };
 
 export const getPublicUpdateCheckQueryOptions = <
@@ -2440,8 +2528,8 @@ export const getPublicDownloadUrl = (params: PublicDownloadParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/finn/v1/download?${stringifiedParams}`
-    : `/api/finn/v1/download`;
+    ? `/api/download?${stringifiedParams}`
+    : `/api/download`;
 };
 
 export const publicDownload = async (
@@ -2455,7 +2543,7 @@ export const publicDownload = async (
 };
 
 export const getPublicDownloadQueryKey = (params?: PublicDownloadParams) => {
-  return [`/api/finn/v1/download`, ...(params ? [params] : [])] as const;
+  return [`/api/download`, ...(params ? [params] : [])] as const;
 };
 
 export const getPublicDownloadQueryOptions = <

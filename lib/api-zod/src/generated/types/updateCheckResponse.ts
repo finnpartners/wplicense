@@ -9,10 +9,10 @@ import type { UpdateCheckResponseSections } from "./updateCheckResponseSections"
 
 export interface UpdateCheckResponse {
   version?: string | null;
-  downloadUrl?: string | null;
+  download_url?: string | null;
   slug?: string | null;
   tested?: string | null;
   requires?: string | null;
-  requiresPhp?: string | null;
+  requires_php?: string | null;
   sections?: UpdateCheckResponseSections;
 }

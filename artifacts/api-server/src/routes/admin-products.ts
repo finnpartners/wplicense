@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { productsTable, licensesTable } from "@workspace/db/schema";
-import { eq, ne, and, sql, like } from "drizzle-orm";
-import { CreateProductBody, UpdateProductBody, GetProductParams, UpdateProductParams, DeleteProductParams, PollProductParams } from "@workspace/api-zod";
+import { productsTable, licensesTable, releasesTable } from "@workspace/db/schema";
+import { eq, ne, and, sql, like, desc } from "drizzle-orm";
+import { CreateProductBody, UpdateProductBody, GetProductParams, UpdateProductParams, DeleteProductParams, PollProductParams, ListProductReleasesParams } from "@workspace/api-zod";
 import { pollProduct } from "../lib/github-poller";
 
 const router: IRouter = Router();
@@ -156,6 +156,31 @@ router.delete("/admin/products/:id", async (req, res) => {
     res.json({ message: "Product deleted. Affected license assignments have been updated." });
   } catch (err) {
     console.error("Delete product error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/admin/products/:id/releases", async (req, res) => {
+  try {
+    const params = ListProductReleasesParams.safeParse({ id: req.params.id });
+    if (!params.success) {
+      res.status(400).json({ message: "Invalid product ID" });
+      return;
+    }
+
+    const [product] = await db.select({ id: productsTable.id }).from(productsTable).where(eq(productsTable.id, params.data.id));
+    if (!product) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+
+    const releases = await db.select().from(releasesTable)
+      .where(eq(releasesTable.productId, params.data.id))
+      .orderBy(desc(releasesTable.publishedAt));
+
+    res.json(releases);
+  } catch (err) {
+    console.error("List releases error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });

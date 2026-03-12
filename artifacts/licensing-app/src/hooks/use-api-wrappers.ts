@@ -13,6 +13,8 @@ import {
   useDeleteProduct,
   usePollProduct,
   getListProductsQueryKey,
+  getGetProductQueryKey,
+  getListProductReleasesQueryKey,
   useCreateLicense,
   useUpdateLicense,
   useDeleteLicense,
@@ -82,6 +84,13 @@ export function useProductMutations() {
     qc.invalidateQueries({ queryKey: getListProductsQueryKey() });
     qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
   };
+  const onPollSuccess = (productId?: number) => {
+    onSuccess();
+    if (productId) {
+      qc.invalidateQueries({ queryKey: getGetProductQueryKey(productId) });
+      qc.invalidateQueries({ queryKey: getListProductReleasesQueryKey(productId) });
+    }
+  };
   const onError = (err: any) => toast({ title: "Error", description: extractError(err), variant: "destructive" });
 
   return {
@@ -90,8 +99,8 @@ export function useProductMutations() {
     remove: useDeleteProduct({ mutation: { onSuccess: () => { onSuccess(); toast({ title: "Product deleted" }) }, onError } }),
     poll: usePollProduct({ 
       mutation: { 
-        onSuccess: (data) => { 
-          onSuccess(); 
+        onSuccess: (data, variables) => { 
+          onPollSuccess(variables.id); 
           if(data.success) toast({ title: "Polling complete", description: data.message, variant: "success" });
           else toast({ title: "Polling failed", description: data.message, variant: "destructive" });
         }, 

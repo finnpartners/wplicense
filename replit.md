@@ -51,7 +51,7 @@ artifacts-monorepo/
 │   │       └── lib/        # domain, encryption, rate-limit, github-poller
 │   └── licensing-app/      # React frontend (Vite)
 │       └── src/
-│           ├── pages/      # login, dashboard, clients, products, licenses, settings
+│           ├── pages/      # login, dashboard, clients, products, product-detail, settings
 │           ├── hooks/      # use-api-wrappers (mutation hooks with invalidation)
 │           └── components/ # layout/AppLayout, ui/* (shadcn)
 ├── lib/
@@ -59,7 +59,7 @@ artifacts-monorepo/
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-│       └── src/schema/     # clients, products, licenses, settings, users, sessions
+│       └── src/schema/     # clients, products, releases, licenses, settings, users, sessions
 ├── scripts/                # Utility scripts
 │   └── src/
 │       ├── seed-admin.ts   # Create default admin user
@@ -73,6 +73,7 @@ artifacts-monorepo/
 
 - `finn_clients` — Client records (name, company, email, notes)
 - `finn_products` — Products/plugins (name, slug, githubRepo, version info, download URL)
+- `finn_releases` — Release history per product (version, tagName, changelog, download URLs, publishedAt)
 - `finn_licenses` — License keys (UUID key, domain, client ref, plugin access, status)
 - `finn_settings` — Key-value settings store (encrypted values)
 - `finn_users` — Admin users (bcrypt-hashed passwords)
@@ -88,7 +89,8 @@ artifacts-monorepo/
 ### Admin (require auth)
 - `GET /api/admin/dashboard` — Stats
 - CRUD: `/api/admin/clients`, `/api/admin/products`, `/api/admin/licenses`
-- `POST /api/admin/products/:id/poll` — Poll GitHub for latest release
+- `GET /api/admin/products/:id/releases` — List all releases for a product
+- `POST /api/admin/products/:id/poll` — Poll GitHub for all releases and sync
 - `POST /api/admin/licenses/:id/toggle` — Toggle license active/revoked
 - `GET/PUT /api/admin/settings` — Settings management
 - `POST /api/admin/settings/regenerate-api-key` — Regenerate global API key
