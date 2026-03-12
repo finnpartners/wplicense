@@ -165,7 +165,11 @@ export default function Clients() {
             {clients?.map((client) => (
               <TableRow key={client.id}>
                 <TableCell className="font-semibold text-slate-900">{client.name}</TableCell>
-                <TableCell className="text-slate-600">{client.email || "-"}</TableCell>
+                <TableCell className="text-slate-600">
+                  {client.email ? (
+                    <a href={`mailto:${client.email}`} className="text-indigo-600 hover:text-indigo-700 hover:underline">{client.email}</a>
+                  ) : "-"}
+                </TableCell>
                 <TableCell>
                   <span className="inline-flex items-center justify-center bg-slate-100 text-slate-700 font-bold px-2.5 py-0.5 rounded-full text-xs">
                     {client.licenseCount}
@@ -230,7 +234,9 @@ export default function Clients() {
                 <TableRow key={license.id}>
                   <TableCell className="font-mono text-sm text-slate-600">{license.licenseKeyPreview}</TableCell>
                   <TableCell className="font-semibold text-slate-900">{license.clientName || <span className="text-amber-600 font-normal">Unassigned</span>}</TableCell>
-                  <TableCell className="text-slate-600">{license.domain}</TableCell>
+                  <TableCell className="text-slate-600">
+                    <a href={`https://${license.domain}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 hover:underline">{license.domain}</a>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={license.pluginAccess === "all" ? "secondary" : "outline"} className="text-xs">
                       {license.pluginAccess === "all" ? "All Plugins" : "Specific"}
