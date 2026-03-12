@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,8 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, Package, RefreshCw, Github } from "lucide-react";
+import { Plus, Edit2, Trash2, Package, RefreshCw, Github, Search, Lock, Check } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -21,6 +23,14 @@ const productSchema = z.object({
 });
 type ProductForm = z.infer<typeof productSchema>;
 
+interface GitHubRepo {
+  fullName: string;
+  name: string;
+  description: string | null;
+  isPrivate: boolean;
+  alreadyAdded: boolean;
+}
+
 export default function Products() {
   const [, navigate] = useLocation();
   const { data: products, isLoading } = useListProducts();
@@ -28,6 +38,7 @@ export default function Products() {
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductForm>({
     resolver: zodResolver(productSchema)
@@ -57,12 +68,29 @@ export default function Products() {
     }
   };
 
+  const handleImport = (repo: GitHubRepo) => {
+    const slug = repo.name.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    create.mutate(
+      { data: { name: repo.name, slug, githubRepo: repo.fullName } },
+      { onSuccess: () => setImportOpen(false) }
+    );
+  };
+
   return (
     <div>
       <PageHeader 
         title="Products" 
         description="Register repositories to distribute"
-        action={<Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" /> Add Product</Button>}
+        action={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Github className="w-4 h-4 mr-2" /> Import from GitHub
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" /> Add Product
+            </Button>
+          </div>
+        }
       />
 
       {isLoading ? (
@@ -74,7 +102,12 @@ export default function Products() {
           </div>
           <h3 className="text-xl font-display font-bold text-slate-900">No products found</h3>
           <p className="text-slate-500 max-w-sm mx-auto mt-2 mb-8">Register a GitHub repository to distribute as a licensed WordPress plugin.</p>
-          <Button onClick={openCreate}>Add First Product</Button>
+          <div className="flex items-center justify-center gap-3">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Github className="w-4 h-4 mr-2" /> Import from GitHub
+            </Button>
+            <Button onClick={openCreate}>Add Manually</Button>
+          </div>
         </div>
       ) : (
         <Table>
@@ -175,6 +208,140 @@ export default function Products() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImportGitHubDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        importing={create.isPending}
+      />
     </div>
+  );
+}
+
+function ImportGitHubDialog({
+  open,
+  onOpenChange,
+  onImport,
+  importing,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onImport: (repo: GitHubRepo) => void;
+  importing: boolean;
+}) {
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchRepos = useCallback(async (query: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = query
+        ? `${BASE}/api/admin/github/repos?q=${encodeURIComponent(query)}`
+        : `${BASE}/api/admin/github/repos`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.message || "Failed to fetch repositories");
+        setRepos([]);
+        return;
+      }
+      const data = await res.json();
+      setRepos(data);
+    } catch {
+      setError("Failed to connect to server");
+      setRepos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchRepos("");
+      setSearch("");
+    }
+  }, [open, fetchRepos]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (searchTimeout) clearTimeout(searchTimeout);
+    setSearchTimeout(setTimeout(() => fetchRepos(value), 400));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Import from GitHub</DialogTitle>
+        </DialogHeader>
+        <div className="mt-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Search repositories..."
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="mt-3 max-h-80 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100">
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
+              </div>
+            )}
+
+            {error && (
+              <div className="p-4 text-center text-sm text-rose-600">{error}</div>
+            )}
+
+            {!loading && !error && repos.length === 0 && (
+              <div className="p-6 text-center text-sm text-slate-500">
+                No repositories found.
+              </div>
+            )}
+
+            {!loading && !error && repos.map((repo) => (
+              <div
+                key={repo.fullName}
+                className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+              >
+                <div className="min-w-0 flex-1 mr-3">
+                  <div className="flex items-center gap-2">
+                    <Github className="w-4 h-4 text-slate-500 shrink-0" />
+                    <span className="font-mono text-sm font-medium text-slate-900 truncate">{repo.fullName}</span>
+                    {repo.isPrivate && <Lock className="w-3 h-3 text-amber-500 shrink-0" />}
+                  </div>
+                  {repo.description && (
+                    <p className="text-xs text-slate-500 mt-0.5 truncate ml-6">{repo.description}</p>
+                  )}
+                </div>
+                {repo.alreadyAdded ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
+                    <Check className="w-3.5 h-3.5" /> Added
+                  </span>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0 h-7 px-3 text-xs"
+                    onClick={() => onImport(repo)}
+                    disabled={importing}
+                  >
+                    Import
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

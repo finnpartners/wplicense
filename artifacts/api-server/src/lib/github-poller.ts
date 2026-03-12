@@ -17,7 +17,7 @@ interface GitHubRelease {
   prerelease?: boolean;
 }
 
-async function getGithubHeaders(): Promise<Record<string, string>> {
+export async function getGithubHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "User-Agent": "FINN-Licensing-Server/1.0.0",
