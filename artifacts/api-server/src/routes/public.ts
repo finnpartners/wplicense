@@ -84,13 +84,13 @@ router.get("/finn/v1/products", async (req, res) => {
       .where(and(isNotNull(productsTable.downloadUrl), ne(productsTable.downloadUrl, "")))
       .orderBy(productsTable.name);
 
-    res.json(products.map((p) => ({
+    res.json({ data: products.map((p) => ({
       id: String(p.id),
       name: p.name,
       slug: p.slug,
       version: p.latestVersion,
       description: p.description,
-    })));
+    })) });
   } catch (err) {
     console.error("Public products error:", err);
     res.status(500).json({ message: "Internal server error" });
