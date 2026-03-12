@@ -119,11 +119,22 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 ## Root Scripts
 
 - `pnpm run build` — typecheck + build all packages
+- `pnpm run build:production` — full production build (typecheck, codegen, frontend build, API server bundle with frontend + migrations)
 - `pnpm run typecheck` — tsc --build
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks/schemas from OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push schema directly to database (dev only)
 - `pnpm --filter @workspace/db run generate` — generate a new migration file from schema changes
 - `pnpm --filter @workspace/db run migrate` — run pending migrations against the database
+
+## Production Build & Azure Deployment
+
+Run `pnpm run build:production` to produce a self-contained `artifacts/api-server/dist/` folder containing:
+- `index.cjs` — bundled API server (serves both API and frontend)
+- `public/` — built frontend static files
+- `migrations/` — database migration files
+- `package.json` — with `start` script (`node index.cjs`)
+
+Deploy the contents of `artifacts/api-server/dist/` to Azure App Service. Set the startup command to `node index.cjs`. The server runs migrations automatically on startup, then serves the API at `/api/*` and the frontend at `/`.
 
 ## Database Migrations
 

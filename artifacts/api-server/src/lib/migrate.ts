@@ -4,11 +4,21 @@ import path from "path";
 import { existsSync } from "fs";
 import { fileURLToPath } from "url";
 
+function getDirname(): string {
+  try {
+    return path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    return __dirname;
+  }
+}
+
 export async function runMigrations() {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const dir = getDirname();
   const candidates = [
-    path.resolve(__dirname, "../../../../shared/db/migrations"),
-    path.resolve(__dirname, "../../shared/db/migrations"),
+    path.resolve(dir, "../../../../shared/db/migrations"),
+    path.resolve(dir, "../migrations"),
+    path.resolve(dir, "migrations"),
+    path.resolve(process.cwd(), "migrations"),
     path.resolve(process.cwd(), "shared/db/migrations"),
   ];
 

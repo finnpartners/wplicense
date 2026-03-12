@@ -4,6 +4,9 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import path from "path";
+import { existsSync } from "fs";
+import { fileURLToPath } from "url";
 import { pool } from "@workspace/db";
 import router from "./routes";
 
@@ -61,5 +64,26 @@ app.use(
 );
 
 app.use("/api", router);
+
+if (process.env.NODE_ENV === "production") {
+  let dir: string;
+  try {
+    dir = path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    dir = __dirname;
+  }
+  const candidates = [
+    path.resolve(dir, "public"),
+    path.resolve(dir, "../../artifacts/licensing-app/dist/public"),
+    path.resolve(process.cwd(), "public"),
+  ];
+  const staticDir = candidates.find((p) => existsSync(p));
+  if (staticDir) {
+    app.use(express.static(staticDir));
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(staticDir, "index.html"));
+    });
+  }
+}
 
 export default app;
