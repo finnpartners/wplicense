@@ -1,0 +1,22 @@
+packages:
+  "framer-motion": "Smooth page transitions and micro-interactions"
+  "recharts": "Dashboard statistics visualization"
+  "date-fns": "Human-readable date formatting"
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod validation for forms"
+  "clsx": "Class name merging"
+  "tailwind-merge": "Tailwind class merging"
+  "@radix-ui/react-dialog": "Accessible modal dialogs"
+  "@radix-ui/react-slot": "Polymorphic components"
+
+images:
+  - path: "artifacts/licensing-app/public/images/login-bg.png"
+    description: "Abstract minimal geometric waves in deep navy blue and indigo, dark professional corporate tech background"
+    aspect_ratio: "16:9"
+  - path: "artifacts/licensing-app/public/images/logo.png"
+    description: "Modern minimalist geometric letter F logo mark in vibrant blue on transparent background, tech startup style"
+    aspect_ratio: "1:1"
+
+notes:
+  - App relies on generated TanStack Query hooks from @workspace/api-client-react
+  - Session-based authentication with 401 redirects to /login

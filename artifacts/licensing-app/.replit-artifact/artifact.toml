@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "FINN Licensing Server"
+version = "1.0.0"
+id = "artifacts/licensing-app"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 26080
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/licensing-app run dev"
+
+[services.env]
+PORT = "26080"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/licensing-app", "run", "build"]
+publicDir = "artifacts/licensing-app/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

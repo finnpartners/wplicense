@@ -1,8 +1,8 @@
-# Workspace
+# FINN Licensing Server
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Full-stack web application for managing WordPress plugin licenses. Built with React + Express + PostgreSQL in a pnpm monorepo.
 
 ## Stack
 
@@ -10,87 +10,130 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
+- **Frontend**: React 19 + Vite + Tailwind CSS + shadcn/ui + wouter (routing) + React Query
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
+- **Auth**: Session-based (bcrypt + express-session + connect-pg-simple)
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+
+## Key Features
+
+- Admin dashboard with stats overview
+- Client management (CRUD)
+- Product management (CRUD + GitHub release polling)
+- License management (CRUD + toggle active/revoked, auto-generated UUID keys)
+- Settings (encrypted GitHub PAT, auto-generated API key with regeneration)
+- Public API at `/api/finn/v1/*` for license validation, update checks, and download proxy
+- Rate limiting on validation endpoint (60 req/hr per IP)
+- Domain normalization (strips scheme, www, trailing slashes)
+
+## Environment Variables
+
+- `DATABASE_URL` — PostgreSQL connection string (auto-provided by Replit)
+- `SESSION_SECRET` — Required. Session signing secret
+- `ENCRYPTION_KEY` — Required. Used to encrypt/decrypt stored secrets (API key, GitHub PAT)
+
+## Default Admin Credentials
+
+- Username: `admin`, Password: `admin` (seeded via `pnpm --filter @workspace/scripts run seed`)
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server
+│   │   └── src/
+│   │       ├── routes/     # auth, admin-*, public routes
+│   │       ├── middlewares/ # auth middleware
+│   │       └── lib/        # domain, encryption, rate-limit, github-poller
+│   └── licensing-app/      # React frontend (Vite)
+│       └── src/
+│           ├── pages/      # login, dashboard, clients, products, licenses, settings
+│           ├── hooks/      # use-api-wrappers (mutation hooks with invalidation)
+│           └── components/ # layout/AppLayout, ui/* (shadcn)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+│       └── src/schema/     # clients, products, licenses, settings, users, sessions
+├── scripts/                # Utility scripts
+│   └── src/
+│       ├── seed-admin.ts   # Create default admin user
+│       └── clear-settings.ts
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+└── package.json
 ```
+
+## Database Tables
+
+- `finn_clients` — Client records (name, company, email, notes)
+- `finn_products` — Products/plugins (name, slug, githubRepo, version info, download URL)
+- `finn_licenses` — License keys (UUID key, domain, client ref, plugin access, status)
+- `finn_settings` — Key-value settings store (encrypted values)
+- `finn_users` — Admin users (bcrypt-hashed passwords)
+- `finn_sessions` — Session store (connect-pg-simple)
+
+## API Routes
+
+### Auth
+- `POST /api/auth/login` — Login with username/password
+- `POST /api/auth/logout` — Destroy session
+- `GET /api/auth/me` — Get current user (auth check)
+
+### Admin (require auth)
+- `GET /api/admin/dashboard` — Stats
+- CRUD: `/api/admin/clients`, `/api/admin/products`, `/api/admin/licenses`
+- `POST /api/admin/products/:id/poll` — Poll GitHub for latest release
+- `POST /api/admin/licenses/:id/toggle` — Toggle license active/revoked
+- `GET/PUT /api/admin/settings` — Settings management
+- `POST /api/admin/settings/regenerate-api-key` — Regenerate global API key
+
+### Public
+- `GET /api/finn/v1/status` — Health check
+- `POST /api/finn/v1/validate` — Validate license (rate-limited)
+- `GET /api/finn/v1/products` — List products (Bearer token auth)
+- `GET /api/finn/v1/update-check` — Check for plugin updates
+- `GET /api/finn/v1/download` — Download plugin ZIP (proxied through GitHub)
 
 ## TypeScript & Composite Projects
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references.
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+- **Always typecheck from the root** — run `pnpm run typecheck`
+- **`emitDeclarationOnly`** — only `.d.ts` files during typecheck; JS bundling via esbuild/tsx/vite
 
 ## Root Scripts
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+- `pnpm run build` — typecheck + build all packages
+- `pnpm run typecheck` — tsc --build
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks/schemas from OpenAPI spec
+- `pnpm --filter @workspace/db run push` — push schema to database
+- `pnpm --filter @workspace/scripts run seed` — seed admin user
 
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)
+Express 5 API server with session-based auth, admin CRUD routes, and public licensing API.
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
-
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+### `artifacts/licensing-app` (`@workspace/licensing-app`)
+React + Vite frontend with dark navy sidebar, admin pages for clients/products/licenses/settings.
 
 ### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+Drizzle ORM schema and PostgreSQL connection. Exports pool, db instance, and all table schemas.
 
 ### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
+OpenAPI 3.1 spec and Orval codegen config.
 
 ### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
+Generated Zod schemas from OpenAPI spec.
 
 ### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+Generated React Query hooks and fetch client.
 
 ### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+Utility scripts. Run via `pnpm --filter @workspace/scripts run <script>`.
