@@ -17,10 +17,6 @@ const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z.string().min(1, "Slug is required"),
   githubRepo: z.string().min(1, "GitHub Repo is required"),
-  description: z.string().optional().nullable(),
-  requiresWp: z.string().optional().nullable(),
-  testedWp: z.string().optional().nullable(),
-  requiresPhp: z.string().optional().nullable(),
 });
 type ProductForm = z.infer<typeof productSchema>;
 
@@ -37,7 +33,7 @@ export default function Products() {
 
   const openCreate = () => {
     setEditingId(null);
-    reset({ name: "", slug: "", githubRepo: "", description: "", requiresWp: "", testedWp: "", requiresPhp: "" });
+    reset({ name: "", slug: "", githubRepo: "" });
     setDialogOpen(true);
   };
 
@@ -47,10 +43,6 @@ export default function Products() {
       name: product.name,
       slug: product.slug,
       githubRepo: product.githubRepo,
-      description: product.description || "",
-      requiresWp: product.requiresWp || "",
-      testedWp: product.testedWp || "",
-      requiresPhp: product.requiresPhp || "",
     });
     setDialogOpen(true);
   };
@@ -167,26 +159,6 @@ export default function Products() {
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">GitHub Repository *</label>
               <Input {...register("githubRepo")} placeholder="owner/repo" className={errors.githubRepo ? "border-rose-300 font-mono" : "font-mono"} />
               <p className="text-xs text-slate-500 mt-1">Format: owner/repo. Used to poll for releases.</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description</label>
-              <Input {...register("description")} placeholder="Short summary of what this plugin does" />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-               <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Requires WP</label>
-                  <Input {...register("requiresWp")} placeholder="6.0" className="h-9 text-sm" />
-               </div>
-               <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Tested WP</label>
-                  <Input {...register("testedWp")} placeholder="6.4" className="h-9 text-sm" />
-               </div>
-               <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Requires PHP</label>
-                  <Input {...register("requiresPhp")} placeholder="7.4" className="h-9 text-sm" />
-               </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
