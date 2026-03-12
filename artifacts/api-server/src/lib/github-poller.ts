@@ -48,6 +48,7 @@ export async function pollProduct(productId: number): Promise<{ success: boolean
       published_at: string;
       body: string;
       assets: GitHubAsset[];
+      zipball_url?: string;
     }
 
     const body: GitHubRelease = await response.json() as GitHubRelease;
@@ -60,9 +61,13 @@ export async function pollProduct(productId: number): Promise<{ success: boolean
       }
     }
 
+    if (!downloadUrl && body.zipball_url) {
+      downloadUrl = body.zipball_url;
+    }
+
     if (!downloadUrl) {
       await db.update(productsTable).set({ lastChecked: new Date() }).where(eq(productsTable.id, productId));
-      return { success: false, message: "No .zip asset found in latest release" };
+      return { success: false, message: "No downloadable asset found in latest release" };
     }
 
     const version = (body.tag_name || "").replace(/^v/, "");

@@ -213,8 +213,9 @@ router.get("/download", async (req, res) => {
       }
     }
 
+    const isZipball = product.downloadUrl.includes("/zipball/");
     const headers: Record<string, string> = {
-      Accept: "application/octet-stream",
+      Accept: isZipball ? "application/vnd.github+json" : "application/octet-stream",
       "User-Agent": "FINN-Licensing-Server/1.0.0",
     };
     if (githubToken) {
@@ -231,8 +232,9 @@ router.get("/download", async (req, res) => {
       return;
     }
 
+    const filename = product.slug ? `${product.slug}.zip` : "plugin.zip";
     res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", 'attachment; filename="plugin.zip"');
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
     const reader = response.body.getReader();
     const pump = async () => {
