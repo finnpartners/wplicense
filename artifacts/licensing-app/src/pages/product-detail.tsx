@@ -1,3 +1,4 @@
+import { Fragment, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { PageHeader } from "@/components/layout/AppLayout";
 import { useGetProduct, useListProductReleases } from "@workspace/api-client-react";
@@ -5,12 +6,13 @@ import { useProductMutations } from "@/hooks/use-api-wrappers";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Github, RefreshCw, Calendar, Tag, Download } from "lucide-react";
+import { ArrowLeft, Github, RefreshCw, Calendar, Tag, Download, ChevronDown, ChevronRight } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 export default function ProductDetail() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const productId = parseInt(params.id || "0", 10);
 
   const { data: product, isLoading: productLoading } = useGetProduct(productId, {
@@ -98,63 +100,78 @@ export default function ProductDetail() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8"></TableHead>
               <TableHead>Version</TableHead>
               <TableHead>Tag</TableHead>
               <TableHead>Published</TableHead>
               <TableHead>Download</TableHead>
-              <TableHead>Changelog</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {releases.map((release, idx) => (
-              <TableRow key={release.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={idx === 0 ? "success" : "outline"} className="font-mono">
-                      {release.version}
-                    </Badge>
-                    {idx === 0 && (
-                      <span className="text-xs text-emerald-600 font-semibold">Latest</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono text-sm text-slate-600">{release.tagName}</span>
-                </TableCell>
-                <TableCell className="text-slate-500 text-sm">
-                  {formatDate(release.publishedAt)}
-                </TableCell>
-                <TableCell>
-                  {release.downloadUrl ? (
-                    <a
-                      href={release.downloadUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Download
-                    </a>
-                  ) : (
-                    <span className="text-slate-400 text-sm">—</span>
+            {releases.map((release, idx) => {
+              const isExpanded = expandedId === release.id;
+              const hasChangelog = !!release.changelog;
+              return (
+                <Fragment key={release.id}>
+                  <TableRow
+                    className={hasChangelog ? "cursor-pointer" : ""}
+                    onClick={() => hasChangelog && setExpandedId(isExpanded ? null : release.id)}
+                  >
+                    <TableCell className="w-8 pr-0">
+                      {hasChangelog ? (
+                        isExpanded
+                          ? <ChevronDown className="w-4 h-4 text-slate-400" />
+                          : <ChevronRight className="w-4 h-4 text-slate-400" />
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={idx === 0 ? "success" : "outline"} className="font-mono">
+                          {release.version}
+                        </Badge>
+                        {idx === 0 && (
+                          <span className="text-xs text-emerald-600 font-semibold">Latest</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-sm text-slate-600">{release.tagName}</span>
+                    </TableCell>
+                    <TableCell className="text-slate-500 text-sm">
+                      {formatDate(release.publishedAt)}
+                    </TableCell>
+                    <TableCell>
+                      {release.downloadUrl ? (
+                        <a
+                          href={release.downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Download
+                        </a>
+                      ) : (
+                        <span className="text-slate-400 text-sm">—</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  {isExpanded && release.changelog && (
+                    <TableRow key={`${release.id}-changelog`} className="bg-slate-50/80 hover:bg-slate-50/80">
+                      <TableCell colSpan={5} className="p-0">
+                        <div className="px-6 py-4 border-t border-slate-100">
+                          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Changelog</div>
+                          <pre className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed max-h-64 overflow-auto">
+                            {release.changelog}
+                          </pre>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   )}
-                </TableCell>
-                <TableCell className="max-w-md">
-                  {release.changelog ? (
-                    <details className="group">
-                      <summary className="cursor-pointer text-sm text-slate-600 hover:text-slate-900 select-none">
-                        View changelog
-                      </summary>
-                      <pre className="mt-2 text-xs text-slate-600 whitespace-pre-wrap bg-slate-50 rounded-lg p-3 max-h-48 overflow-auto border border-slate-100">
-                        {release.changelog}
-                      </pre>
-                    </details>
-                  ) : (
-                    <span className="text-slate-400 text-sm">—</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
+                </Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       )}
