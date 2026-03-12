@@ -13,7 +13,7 @@ Full-stack web application for managing WordPress plugin licenses. Built with Re
 - **Frontend**: React 19 + Vite + Tailwind CSS + shadcn/ui + wouter (routing) + React Query
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
-- **Auth**: Azure AD SSO (OpenID Connect authorization code flow via `jose` for JWT verification)
+- **Auth**: Azure Easy Auth (authentication handled at infrastructure level via headers)
 - **Security**: Helmet, CSRF double-submit with timing-safe comparison, configurable CORS
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
@@ -29,31 +29,20 @@ Full-stack web application for managing WordPress plugin licenses. Built with Re
 - Public API at `/api/*` for license validation, update checks, and download proxy
 - Rate limiting on validation endpoint (60 req/hr per IP)
 - Domain normalization (strips scheme, www, trailing slashes)
-- Azure AD SSO login (no local passwords); dev bypass login when SSO is unconfigured (non-production only)
+- Azure Easy Auth (infrastructure-level authentication); dev bypass login for local development
 
 ## Environment Variables
 
 - `DATABASE_URL` — PostgreSQL connection string (auto-provided by Replit)
 - `SESSION_SECRET` — Required. Session signing secret
 - `ENCRYPTION_KEY` — Required. Used to encrypt/decrypt stored secrets (API key, GitHub PAT)
-- `AZURE_CLIENT_ID` — Optional (required for SSO). Azure AD Application (client) ID
-- `AZURE_CLIENT_SECRET` — Optional (required for SSO). Azure AD client secret
-- `AZURE_TENANT_ID` — Optional (required for SSO). Azure AD Directory (tenant) ID
-- `AZURE_REDIRECT_URI` — Optional (required for SSO). OAuth callback URL (e.g. `https://your-domain.com/api/auth/callback`)
-- `AZURE_ALLOWED_EMAILS` — Optional. Comma-separated email allowlist for admin access
-- `AZURE_ALLOWED_DOMAIN` — Optional. Comma-separated domain allowlist (e.g. `finnpartners.com`)
 - `CORS_ORIGIN` — Required in production. Comma-separated allowed origins
 - `APP_BASE_URL` — Optional. Base URL for post-login redirect
 - `APP_PATH` — Optional. Frontend app path prefix
 
 ## Authentication Flow
 
-1. User clicks "Sign in with Microsoft" on login page
-2. Browser redirects to `/api/auth/login` → server redirects to Azure AD authorize endpoint
-3. After Azure AD login, callback hits `/api/auth/callback`
-4. Server exchanges authorization code for tokens, validates ID token via JWKS
-5. Session created with user's Azure OID, email, and display name
-6. User redirected to dashboard
+Authentication is handled by Azure Easy Auth at the infrastructure level. The app reads user identity from Easy Auth headers (`X-MS-CLIENT-PRINCIPAL-ID`, `X-MS-CLIENT-PRINCIPAL-NAME`). In development, a dev-login bypass creates a local session.
 
 ## Structure
 
@@ -62,9 +51,9 @@ artifacts-monorepo/
 ├── artifacts/
 │   ├── api-server/         # Express API server
 │   │   └── src/
-│   │       ├── routes/     # auth (Azure SSO), admin-*, public routes
+│   │       ├── routes/     # auth, admin-*, public routes
 │   │       ├── middlewares/ # auth, csrf middlewares
-│   │       └── lib/        # azure-auth, domain, encryption, rate-limit, github-poller
+│   │       └── lib/        # domain, encryption, rate-limit, github-poller
 │   └── licensing-app/      # React frontend (Vite)
 │       └── src/
 │           ├── pages/      # login, dashboard, clients, products, product-detail, settings
@@ -100,13 +89,10 @@ artifacts-monorepo/
 
 ## API Routes
 
-### Auth (Azure AD SSO)
-- `GET /api/auth/sso-status` — Returns `{ ssoEnabled, devLoginEnabled }` based on Azure env vars and environment
-- `GET /api/auth/login` — Redirects to Azure AD authorize endpoint (503 if SSO not configured)
-- `GET /api/auth/callback` — Handles Azure AD callback, creates session (503 if SSO not configured)
-- `POST /api/auth/dev-login` — Dev-only session bypass (403 in production or when SSO is configured)
+### Auth
+- `GET /api/auth/me` — Get current user from Easy Auth headers or session (id, email, name)
+- `POST /api/auth/dev-login` — Dev-only session bypass (403 in production)
 - `POST /api/auth/logout` — Destroy session
-- `GET /api/auth/me` — Get current user (id, email, name)
 
 ### Admin (require auth + CSRF)
 - `GET /api/admin/dashboard` — Stats
@@ -141,10 +127,10 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)
-Express 5 API server with Azure AD SSO, admin CRUD routes, and public licensing API. Uses Helmet for security headers.
+Express 5 API server with admin CRUD routes and public licensing API. Uses Helmet for security headers. Auth via Azure Easy Auth headers.
 
 ### `artifacts/licensing-app` (`@workspace/licensing-app`)
-React + Vite frontend with dark navy sidebar, admin pages for clients/products/licenses/settings. Login via Microsoft SSO.
+React + Vite frontend with dark navy sidebar, admin pages for clients/products/licenses/settings.
 
 ### `shared/db` (`@workspace/db`)
 Drizzle ORM schema and PostgreSQL connection. Exports pool, db instance, and all table schemas.

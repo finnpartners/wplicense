@@ -26,7 +26,6 @@ import type {
   License,
   LicenseCreated,
   LicenseInput,
-  LoginParams,
   MessageResponse,
   PollResult,
   Product,
@@ -119,90 +118,6 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Redirect to Azure AD SSO
- */
-export const getLoginUrl = (params?: LoginParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/auth/login?${stringifiedParams}`
-    : `/api/auth/login`;
-};
-
-export const login = async (
-  params?: LoginParams,
-  options?: RequestInit,
-): Promise<unknown> => {
-  return customFetch<unknown>(getLoginUrl(params), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getLoginQueryKey = (params?: LoginParams) => {
-  return [`/api/auth/login`, ...(params ? [params] : [])] as const;
-};
-
-export const getLoginQueryOptions = <
-  TData = Awaited<ReturnType<typeof login>>,
-  TError = ErrorType<void>,
->(
-  params?: LoginParams,
-  options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof login>>, TError, TData>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getLoginQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof login>>> = ({
-    signal,
-  }) => login(params, { signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof login>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type LoginQueryResult = NonNullable<Awaited<ReturnType<typeof login>>>;
-export type LoginQueryError = ErrorType<void>;
-
-/**
- * @summary Redirect to Azure AD SSO
- */
-
-export function useLogin<
-  TData = Awaited<ReturnType<typeof login>>,
-  TError = ErrorType<void>,
->(
-  params?: LoginParams,
-  options?: {
-    query?: UseQueryOptions<Awaited<ReturnType<typeof login>>, TError, TData>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getLoginQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

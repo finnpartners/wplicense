@@ -197,13 +197,6 @@ export interface UpdateCheckResponse {
   sections?: UpdateCheckResponseSections;
 }
 
-export type LoginParams = {
-  /**
-   * Post-login redirect path
-   */
-  redirect?: string;
-};
-
 export type PublicProducts200 = {
   data: PublicProduct[];
 };

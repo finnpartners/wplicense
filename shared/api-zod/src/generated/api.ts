@@ -15,13 +15,6 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * @summary Redirect to Azure AD SSO
- */
-export const LoginQueryParams = zod.object({
-  redirect: zod.coerce.string().optional().describe("Post-login redirect path"),
-});
-
-/**
  * @summary Logout
  */
 export const LogoutResponse = zod.object({

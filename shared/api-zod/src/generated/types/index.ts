@@ -19,7 +19,6 @@ export * from "./licenseInputPluginAccess";
 export * from "./licenseInputStatus";
 export * from "./licensePluginAccess";
 export * from "./licenseStatus";
-export * from "./loginParams";
 export * from "./messageResponse";
 export * from "./pollResult";
 export * from "./product";
