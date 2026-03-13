@@ -24,4 +24,9 @@ router.get("/admin/dashboard", async (_req, res) => {
   }
 });
 
+router.get("/admin/api-key", async (_req, res) => {
+  const apiKey = process.env.FINN_API_KEY || "";
+  res.json({ apiKey });
+});
+
 export default router;

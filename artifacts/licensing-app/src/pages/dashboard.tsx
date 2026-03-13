@@ -1,8 +1,12 @@
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/AppLayout";
 import { useGetDashboard } from "@workspace/api-client-react";
-import { Users, Package, Key, ShieldCheck, type LucideIcon } from "lucide-react";
+import { Users, Package, Key, ShieldCheck, Copy, Check, type LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function StatCard({ title, value, icon: Icon, colorClass }: { title: string; value: number; icon: LucideIcon; colorClass: string }) {
   return (
@@ -18,6 +22,53 @@ function StatCard({ title, value, icon: Icon, colorClass }: { title: string; val
           <div className="text-sm font-medium text-slate-500 uppercase tracking-wider">{title}</div>
         </div>
       </div>
+    </Card>
+  );
+}
+
+function ApiKeyCard() {
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    fetch(`${BASE}/api/admin/api-key`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => setApiKey(d.apiKey || ""))
+      .catch(() => setApiKey(""));
+  }, []);
+
+  const handleCopy = () => {
+    if (!apiKey) return;
+    navigator.clipboard.writeText(apiKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="font-bold text-lg text-slate-900">FINN API Key</h3>
+          <p className="text-sm text-slate-500">Use this key in the WordPress FINN DEV Dashboard settings.</p>
+        </div>
+      </div>
+      {apiKey === null ? (
+        <div className="h-10 bg-slate-100 rounded-lg animate-pulse" />
+      ) : apiKey ? (
+        <div className="flex items-center gap-2">
+          <code className="flex-1 bg-slate-100 text-sm font-mono px-4 py-2.5 rounded-lg text-slate-700 select-all truncate">
+            {apiKey}
+          </code>
+          <Button variant="outline" size="sm" onClick={handleCopy} className="shrink-0 h-10 px-3">
+            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+            <span className="ml-1.5">{copied ? "Copied" : "Copy"}</span>
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-amber-600 bg-amber-50 px-4 py-2.5 rounded-lg">
+          No FINN API Key configured. Set the <code className="font-mono font-semibold">FINN_API_KEY</code> environment variable.
+        </p>
+      )}
     </Card>
   );
 }
@@ -66,6 +117,11 @@ export default function Dashboard() {
           icon={ShieldCheck} 
           colorClass="bg-emerald-100 text-emerald-600"
         />
+      </div>
+
+      <div className="mt-12">
+        <h2 className="text-2xl font-display font-bold text-slate-900 mb-6">API Key</h2>
+        <ApiKeyCard />
       </div>
 
       <div className="mt-12">
