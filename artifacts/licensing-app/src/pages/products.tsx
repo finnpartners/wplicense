@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { PageHeader } from "@/components/layout/AppLayout";
-import { useListProducts } from "@workspace/api-client-react";
+import { useListProducts, getListProductsQueryKey } from "@workspace/api-client-react";
 import { useProductMutations } from "@/hooks/use-api-wrappers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,24 @@ export default function Products() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [pollingAll, setPollingAll] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handlePollAll = async () => {
+    setPollingAll(true);
+    try {
+      const res = await fetch(`${BASE}/api/admin/products/poll-all`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+      }
+    } catch {
+    } finally {
+      setPollingAll(false);
+    }
+  };
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductForm>({
     resolver: zodResolver(productSchema)
@@ -83,6 +102,14 @@ export default function Products() {
         description="Register repositories to distribute"
         action={
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handlePollAll}
+              disabled={pollingAll}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${pollingAll ? 'animate-spin' : ''}`} />
+              {pollingAll ? "Checking..." : "Check All"}
+            </Button>
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Github className="w-4 h-4 mr-2" /> Import from GitHub
             </Button>

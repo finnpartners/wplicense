@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { productsTable, licensesTable, releasesTable } from "@workspace/db/schema";
 import { eq, ne, and, sql, like, desc } from "drizzle-orm";
 import { CreateProductBody, UpdateProductBody, GetProductParams, UpdateProductParams, DeleteProductParams, PollProductParams, ListProductReleasesParams } from "@workspace/api-zod";
-import { pollProduct, getGithubHeaders } from "../lib/github-poller";
+import { pollProduct, pollAllProducts, getGithubHeaders } from "../lib/github-poller";
 
 const router: IRouter = Router();
 
@@ -209,6 +209,17 @@ router.post("/admin/products/:id/poll", async (req, res) => {
     }
   } catch (err) {
     console.error("Poll product error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/admin/products/poll-all", async (_req, res) => {
+  try {
+    await pollAllProducts();
+    const products = await db.select().from(productsTable).orderBy(productsTable.name);
+    res.json({ success: true, message: `Checked ${products.length} product(s) for updates`, products });
+  } catch (err) {
+    console.error("Poll all products error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
