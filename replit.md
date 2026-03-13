@@ -13,8 +13,8 @@ Full-stack web application for managing WordPress plugin licenses. Built with Re
 - **Frontend**: React 19 + Vite + Tailwind CSS + shadcn/ui + wouter (routing) + React Query
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
-- **Auth**: Azure Easy Auth (authentication handled at infrastructure level via headers)
-- **Security**: Helmet, configurable CORS, Azure Easy Auth (infrastructure-level SSO)
+- **Auth**: Azure Easy Auth ("Allow unauthenticated access" mode; app validates claims token + domain allowlist)
+- **Security**: Helmet, configurable CORS, email domain restriction
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
@@ -66,10 +66,10 @@ artifacts-monorepo/
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-│       └── src/schema/     # clients, products, releases, licenses, sessions
-├── wp-client/              # WordPress integration files
-│   ├── class-finn-licensing-client.php  # Generic drop-in licensing client
-│   └── fp-dev-dashboard.php             # FINN DEV Dashboard plugin
+│       └── src/schema/     # clients, products, releases, licenses, sessions, domain-plugins
+├── attached_assets/        # WordPress plugin + docs for external use
+│   ├── fp-dev-dashboard.php           # FINN DEV Dashboard WordPress plugin (v2.0.0)
+│   └── fp-dev-dashboard-README.md     # Setup & usage docs for the WordPress plugin
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
 └── package.json
@@ -81,6 +81,7 @@ artifacts-monorepo/
 - `finn_products` — Products/plugins (name, slug, githubRepo, version info, download URL)
 - `finn_releases` — Release history per product (version, tagName, changelog, download URLs, publishedAt)
 - `finn_licenses` — License keys (UUID key, domain, client ref, plugin access, status)
+- `finn_domain_plugins` — Plugin version tracking per domain (domain, productId, currentVersion, lastCheckedAt)
 - `finn_sessions` — Session store (connect-pg-simple)
 
 ## API Routes
@@ -101,8 +102,8 @@ artifacts-monorepo/
 - `GET /api/status` — Health check
 - `POST /api/validate` — Validate license (rate-limited)
 - `GET /api/products` — List products (Bearer token auth via `FINN_API_KEY`)
-- `GET /api/update-check` — Check for plugin updates
-- `GET /api/download` — Download plugin ZIP (proxied through GitHub using `GITHUB_PAT`)
+- `GET /api/update-check` — Check for plugin updates (accepts `?product_id=N` or `?slug=fp-xxx`)
+- `GET /api/download` — Download plugin ZIP, proxied through GitHub (accepts `?product_id=N` or `?slug=fp-xxx`)
 
 ## TypeScript & Composite Projects
 
