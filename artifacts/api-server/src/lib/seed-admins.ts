@@ -7,6 +7,7 @@ const DEFAULT_ADMINS = [
   "jethro.may@finnpartners.com",
   "solomon.gorkhover@finnpartners.com",
   "radu.cocian@finnpartners.com",
+  "dev@localhost",
 ];
 
 export async function seedDefaultAdmins() {
