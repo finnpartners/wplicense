@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import crypto from "crypto";
 import { db } from "@workspace/db";
-import { licensesTable, productsTable } from "@workspace/db/schema";
+import { licensesTable, productsTable, domainPluginsTable } from "@workspace/db/schema";
 import { eq, and, isNotNull, ne } from "drizzle-orm";
 import { normaliseDomain } from "../lib/domain";
 import { checkRateLimit } from "../lib/rate-limit";
@@ -139,6 +139,31 @@ router.get("/update-check", async (req, res) => {
     if (!product || !product.downloadUrl) {
       res.json(noUpdate);
       return;
+    }
+
+    const currentVersion = req.query.version as string | undefined;
+    if (currentVersion) {
+      try {
+        await db
+          .insert(domainPluginsTable)
+          .values({
+            licenseId: license.id,
+            productId: product.id,
+            domain: normalizedFingerprint,
+            currentVersion,
+            lastCheckedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: [domainPluginsTable.licenseId, domainPluginsTable.productId],
+            set: {
+              domain: normalizedFingerprint,
+              currentVersion,
+              lastCheckedAt: new Date(),
+            },
+          });
+      } catch (err) {
+        console.error("Failed to track domain plugin version:", err);
+      }
     }
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;

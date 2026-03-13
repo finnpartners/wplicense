@@ -11,8 +11,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Edit2, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight, Monitor } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+interface DomainPlugin {
+  id: number;
+  licenseId: number;
+  productId: number;
+  domain: string;
+  currentVersion: string | null;
+  lastCheckedAt: string;
+  productName: string | null;
+  productSlug: string | null;
+  latestVersion: string | null;
+}
 
 const clientSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -43,7 +58,14 @@ export default function Clients() {
   const [editingLicenseId, setEditingLicenseId] = useState<number | null>(null);
   const [licenseForClientId, setLicenseForClientId] = useState<number | null>(null);
   const [newLicenseKey, setNewLicenseKey] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [domainPluginsOpen, setDomainPluginsOpen] = useState(false);
+  const [domainPluginsDomain, setDomainPluginsDomain] = useState<string | null>(null);
+
+  const { data: domainPlugins } = useQuery<DomainPlugin[]>({
+    queryKey: ["domain-plugins"],
+    queryFn: () => fetch(`${BASE}/api/admin/domain-plugins`, { credentials: "include" }).then(r => r.json()),
+  });
 
   const licenseMutations = useLicenseMutations((key) => {
     setNewLicenseKey(key);
@@ -123,13 +145,20 @@ export default function Clients() {
     }
   };
 
-  const copyKey = () => {
-    if (newLicenseKey) {
-      navigator.clipboard.writeText(newLicenseKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const copyKey = (key: string) => {
+    navigator.clipboard.writeText(key);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
   };
+
+  const openDomainPlugins = (domain: string) => {
+    setDomainPluginsDomain(domain);
+    setDomainPluginsOpen(true);
+  };
+
+  const filteredDomainPlugins = domainPlugins?.filter(
+    (dp) => dp.domain === domainPluginsDomain
+  ) ?? [];
 
   return (
     <div>
@@ -232,7 +261,20 @@ export default function Clients() {
             <TableBody>
               {licenses?.map((license) => (
                 <TableRow key={license.id}>
-                  <TableCell className="font-mono text-sm text-slate-600">{license.licenseKeyPreview}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <code className="font-mono text-sm text-slate-600 truncate max-w-[120px]" title={license.licenseKey}>{(license.licenseKey || "").substring(0, 8)}...</code>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => license.licenseKey && copyKey(license.licenseKey)}
+                        title="Copy license key"
+                      >
+                        {copied === license.licenseKey ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                      </Button>
+                    </div>
+                  </TableCell>
                   <TableCell className="font-semibold text-slate-900">{license.clientName || <span className="text-amber-600 font-normal">Unassigned</span>}</TableCell>
                   <TableCell className="text-slate-600">
                     <a href={`https://${license.domain}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 hover:underline">{license.domain}</a>
@@ -250,6 +292,14 @@ export default function Clients() {
                   <TableCell className="text-slate-500 text-xs">{formatDate(license.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openDomainPlugins(license.domain)}
+                        title="View plugin versions"
+                      >
+                        <Monitor className="w-4 h-4 text-slate-500" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -437,7 +487,6 @@ export default function Clients() {
         </DialogContent>
       </Dialog>
 
-      {/* License Key Display */}
       {newLicenseKey && (
         <Dialog open={!!newLicenseKey} onOpenChange={() => setNewLicenseKey(null)}>
           <DialogContent>
@@ -446,18 +495,60 @@ export default function Clients() {
             </DialogHeader>
             <div className="mt-4">
               <p className="text-sm text-slate-500 mb-4">
-                Copy this license key now. It will not be shown again.
+                Your new license key is ready. You can also copy it later from the license table.
               </p>
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-4">
                 <code className="flex-1 font-mono text-sm text-slate-900 break-all">{newLicenseKey}</code>
-                <Button variant="outline" size="icon" onClick={copyKey} className="shrink-0">
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                <Button variant="outline" size="icon" onClick={() => copyKey(newLicenseKey)} className="shrink-0">
+                  {copied === newLicenseKey ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog open={domainPluginsOpen} onOpenChange={setDomainPluginsOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Plugin Versions — {domainPluginsDomain}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            {filteredDomainPlugins.length === 0 ? (
+              <div className="text-center py-8">
+                <Monitor className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-500">No plugin version data yet.</p>
+                <p className="text-xs text-slate-400 mt-1">Data is collected when the site checks for updates.</p>
+              </div>
+            ) : (
+              <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
+                {filteredDomainPlugins.map((dp) => (
+                  <div key={dp.id} className="flex items-center justify-between px-4 py-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-900">{dp.productName || dp.productSlug}</div>
+                      <div className="text-xs text-slate-400 mt-0.5">Last checked {formatDate(dp.lastCheckedAt)}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        v{dp.currentVersion}
+                      </Badge>
+                      {dp.latestVersion && dp.currentVersion && dp.currentVersion !== dp.latestVersion ? (
+                        <Badge variant="destructive" className="text-xs">
+                          Update available: {dp.latestVersion}
+                        </Badge>
+                      ) : dp.latestVersion && dp.currentVersion === dp.latestVersion ? (
+                        <Badge variant="default" className="text-xs">
+                          Up to date
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -269,7 +269,7 @@ export const PollProductResponse = zod.object({
  */
 export const ListLicensesResponseItem = zod.object({
   id: zod.number(),
-  licenseKeyPreview: zod.string(),
+  licenseKey: zod.string(),
   clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   domain: zod.string(),
@@ -300,7 +300,7 @@ export const GetLicenseParams = zod.object({
 
 export const GetLicenseResponse = zod.object({
   id: zod.number(),
-  licenseKeyPreview: zod.string(),
+  licenseKey: zod.string(),
   clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   domain: zod.string(),
@@ -327,7 +327,7 @@ export const UpdateLicenseBody = zod.object({
 
 export const UpdateLicenseResponse = zod.object({
   id: zod.number(),
-  licenseKeyPreview: zod.string(),
+  licenseKey: zod.string(),
   clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   domain: zod.string(),
@@ -357,7 +357,7 @@ export const ToggleLicenseParams = zod.object({
 
 export const ToggleLicenseResponse = zod.object({
   id: zod.number(),
-  licenseKeyPreview: zod.string(),
+  licenseKey: zod.string(),
   clientId: zod.number().nullish(),
   clientName: zod.string().nullish(),
   domain: zod.string(),

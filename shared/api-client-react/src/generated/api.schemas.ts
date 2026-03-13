@@ -97,7 +97,7 @@ export const LicenseStatus = {
 
 export interface License {
   id: number;
-  licenseKeyPreview: string;
+  licenseKey: string;
   clientId?: number | null;
   clientName?: string | null;
   domain: string;

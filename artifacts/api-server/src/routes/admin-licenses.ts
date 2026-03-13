@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { licensesTable, clientsTable } from "@workspace/db/schema";
+import { licensesTable, clientsTable, domainPluginsTable, productsTable } from "@workspace/db/schema";
 import type { License } from "@workspace/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -12,7 +12,7 @@ const router: IRouter = Router();
 function formatLicense(license: Pick<License, "id" | "licenseKey" | "clientId" | "domain" | "pluginAccess" | "productIds" | "status" | "createdAt">, clientName?: string | null) {
   return {
     id: license.id,
-    licenseKeyPreview: license.licenseKey.substring(0, 8) + "...",
+    licenseKey: license.licenseKey,
     clientId: license.clientId,
     clientName: clientName ?? null,
     domain: license.domain,
@@ -210,6 +210,31 @@ router.post("/admin/licenses/:id/toggle", async (req, res) => {
     res.json(formatLicense(updated, client?.name ?? null));
   } catch (err) {
     console.error("Toggle license error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/admin/domain-plugins", async (_req, res) => {
+  try {
+    const rows = await db
+      .select({
+        id: domainPluginsTable.id,
+        licenseId: domainPluginsTable.licenseId,
+        productId: domainPluginsTable.productId,
+        domain: domainPluginsTable.domain,
+        currentVersion: domainPluginsTable.currentVersion,
+        lastCheckedAt: domainPluginsTable.lastCheckedAt,
+        productName: productsTable.name,
+        productSlug: productsTable.slug,
+        latestVersion: productsTable.latestVersion,
+      })
+      .from(domainPluginsTable)
+      .leftJoin(productsTable, eq(productsTable.id, domainPluginsTable.productId))
+      .orderBy(domainPluginsTable.domain, productsTable.name);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("List domain plugins error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });

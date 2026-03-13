@@ -24,7 +24,8 @@ Full-stack web application for managing WordPress plugin licenses. Built with Re
 - Admin dashboard with stats overview
 - Client management (CRUD)
 - Product management (CRUD + GitHub release polling)
-- License management (CRUD + toggle active/revoked, auto-generated UUID keys)
+- License management (CRUD + toggle active/revoked, auto-generated UUID keys, copy key anytime)
+- Domain plugin version tracking (records current plugin versions when sites check for updates)
 - Public API at `/api/*` for license validation, update checks, and download proxy
 - Rate limiting on validation endpoint (60 req/hr per IP)
 - Domain normalization (strips scheme, www, trailing slashes)
@@ -52,7 +53,7 @@ artifacts-monorepo/
 │   ├── api-server/         # Express API server
 │   │   └── src/
 │   │       ├── routes/     # auth, admin-*, public routes
-│   │       ├── middlewares/ # auth, csrf middlewares
+│   │       ├── middlewares/ # auth middleware
 │   │       └── lib/        # domain, rate-limit, github-poller, easy-auth
 │   └── licensing-app/      # React frontend (Vite)
 │       └── src/

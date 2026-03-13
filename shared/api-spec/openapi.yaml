@@ -819,7 +819,7 @@ components:
       properties:
         id:
           type: integer
-        licenseKeyPreview:
+        licenseKey:
           type: string
         clientId:
           type: integer
@@ -845,7 +845,7 @@ components:
           format: date-time
       required:
         - id
-        - licenseKeyPreview
+        - licenseKey
         - domain
         - pluginAccess
         - status
