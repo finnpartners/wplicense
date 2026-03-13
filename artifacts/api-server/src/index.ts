@@ -1,5 +1,6 @@
 import { runMigrations } from "./lib/migrate";
 import app from "./app";
+import { warmRepoCache } from "./routes/admin-products";
 
 const rawPort = process.env["PORT"];
 
@@ -20,6 +21,7 @@ async function start() {
 
   app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
+    warmRepoCache();
   });
 }
 

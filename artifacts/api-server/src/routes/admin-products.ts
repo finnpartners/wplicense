@@ -210,7 +210,7 @@ router.post("/admin/products/:id/poll", async (req, res) => {
 type CachedRepo = { full_name: string; name: string; description: string | null; private: boolean };
 let repoCache: CachedRepo[] = [];
 let repoCacheTimestamp = 0;
-const REPO_CACHE_TTL = 5 * 60 * 1000;
+const REPO_CACHE_TTL = 30 * 60 * 1000;
 let repoCacheFetching = false;
 
 async function fetchAllGithubRepos(headers: Record<string, string>): Promise<CachedRepo[]> {
@@ -237,9 +237,17 @@ function refreshRepoCacheInBackground(headers: Record<string, string>) {
     .then((repos) => {
       repoCache = repos;
       repoCacheTimestamp = Date.now();
+      console.log(`GitHub repo cache refreshed: ${repos.length} repositories`);
     })
     .catch((err) => console.error("Background repo cache refresh failed:", err))
     .finally(() => { repoCacheFetching = false; });
+}
+
+export function warmRepoCache() {
+  const headers = getGithubHeaders();
+  if (!headers["Authorization"]) return;
+  console.log("Pre-warming GitHub repo cache...");
+  refreshRepoCacheInBackground(headers);
 }
 
 router.get("/admin/github/repos", async (req, res) => {
@@ -251,18 +259,28 @@ router.get("/admin/github/repos", async (req, res) => {
     }
 
     const cacheAge = Date.now() - repoCacheTimestamp;
-    if (repoCache.length === 0 || cacheAge > REPO_CACHE_TTL) {
-      if (repoCache.length > 0) {
-        refreshRepoCacheInBackground(headers);
-      } else {
-        try {
-          repoCache = await fetchAllGithubRepos(headers);
-          repoCacheTimestamp = Date.now();
-        } catch {
-          res.status(502).json({ message: "Failed to fetch repositories from GitHub" });
-          return;
-        }
+
+    if (repoCache.length === 0 && !repoCacheFetching) {
+      try {
+        repoCache = await fetchAllGithubRepos(headers);
+        repoCacheTimestamp = Date.now();
+        console.log(`GitHub repo cache populated: ${repoCache.length} repositories`);
+      } catch {
+        res.status(502).json({ message: "Failed to fetch repositories from GitHub" });
+        return;
       }
+    } else if (repoCache.length === 0 && repoCacheFetching) {
+      let attempts = 0;
+      while (repoCacheFetching && attempts < 30) {
+        await new Promise(r => setTimeout(r, 500));
+        attempts++;
+      }
+      if (repoCache.length === 0) {
+        res.status(502).json({ message: "Repositories are still loading, please try again in a moment" });
+        return;
+      }
+    } else if (cacheAge > REPO_CACHE_TTL) {
+      refreshRepoCacheInBackground(headers);
     }
 
     const existingProducts = await db.select({ githubRepo: productsTable.githubRepo }).from(productsTable);
