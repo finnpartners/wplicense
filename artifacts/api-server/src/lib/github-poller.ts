@@ -145,15 +145,24 @@ export function startDailyPoller(): void {
   console.log("[Poller] Daily release poller started (every 24h)");
 }
 
-async function fetchRepoDescription(repo: string, headers: Record<string, string>): Promise<string | null> {
+async function fetchPluginDescription(repo: string, headers: Record<string, string>): Promise<string | null> {
+  const slug = repo.split("/").pop() || "";
+  const mainFile = `${slug}.php`;
+
   try {
-    const response = await fetch(`https://api.github.com/repos/${repo}`, {
-      headers,
-      signal: AbortSignal.timeout(10000),
-    });
+    const response = await fetch(
+      `https://api.github.com/repos/${repo}/contents/${mainFile}`,
+      {
+        headers: { ...headers, Accept: "application/vnd.github.raw+json" },
+        signal: AbortSignal.timeout(10000),
+      }
+    );
     if (!response.ok) return null;
-    const data = await response.json() as { description?: string | null };
-    return data.description || null;
+
+    const content = await response.text();
+    const headerBlock = content.substring(0, 2000);
+    const match = headerBlock.match(/^\s*\*?\s*Description:\s*(.+)$/m);
+    return match ? match[1].trim() : null;
   } catch {
     return null;
   }
@@ -169,14 +178,14 @@ export async function pollProduct(productId: number): Promise<{ success: boolean
   const repo = product.githubRepo;
 
   try {
-    const [releases, repoDescription] = await Promise.all([
+    const [releases, pluginDescription] = await Promise.all([
       fetchAllReleases(repo, headers),
-      fetchRepoDescription(repo, headers),
+      fetchPluginDescription(repo, headers),
     ]);
 
     if (!releases || releases.length === 0) {
       const descUpdate: Record<string, unknown> = { lastChecked: new Date() };
-      if (repoDescription !== null) descUpdate.description = repoDescription;
+      if (pluginDescription !== null) descUpdate.description = pluginDescription;
       await db.update(productsTable).set(descUpdate).where(eq(productsTable.id, productId));
       return { success: false, message: "No releases found in repository" };
     }
@@ -199,7 +208,7 @@ export async function pollProduct(productId: number): Promise<{ success: boolean
       downloadUrl,
       lastChecked: new Date(),
     };
-    if (repoDescription !== null) updateData.description = repoDescription;
+    if (pluginDescription !== null) updateData.description = pluginDescription;
 
     await db.update(productsTable).set(updateData).where(eq(productsTable.id, productId));
 
