@@ -15,13 +15,6 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * @summary Logout
- */
-export const LogoutResponse = zod.object({
-  message: zod.string(),
-});
-
-/**
  * @summary Get current user
  */
 export const GetMeResponse = zod.object({

@@ -35,19 +35,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /auth/logout:
-    post:
-      operationId: logout
-      tags: [auth]
-      summary: Logout
-      responses:
-        "200":
-          description: Logged out
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageResponse"
-
   /auth/me:
     get:
       operationId: getMe

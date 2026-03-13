@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import authRouter from "./auth";
-import logoutRouter from "./logout";
 import adminDashboardRouter from "./admin-dashboard";
 import adminClientsRouter from "./admin-clients";
 import adminProductsRouter from "./admin-products";
@@ -19,8 +18,6 @@ router.use(authRouter);
 
 router.get("/csrf-token", getCsrfToken);
 router.use(csrfProtection);
-
-router.use(logoutRouter);
 
 router.use(requireAuth);
 router.use(adminDashboardRouter);

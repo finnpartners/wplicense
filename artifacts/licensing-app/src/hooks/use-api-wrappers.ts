@@ -1,8 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import {
-  useLogout,
   useCreateClient,
   useUpdateClient,
   useDeleteClient,
@@ -24,22 +22,6 @@ import {
 
 function extractError(err: any) {
   return err?.message || "An unexpected error occurred";
-}
-
-export function useAuthMutations() {
-  const qc = useQueryClient();
-  const [, setLocation] = useLocation();
-
-  const logoutMutation = useLogout({
-    mutation: {
-      onSuccess: () => {
-        qc.clear();
-        setLocation("/login");
-      },
-    },
-  });
-
-  return { logout: logoutMutation };
 }
 
 export function useClientMutations() {

@@ -1,8 +1,7 @@
 import { useState, ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, Package, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Package, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuthMutations } from "@/hooks/use-api-wrappers";
 import { useGetMe } from "@workspace/api-client-react";
 
 const NAV_ITEMS = [
@@ -14,12 +13,7 @@ const NAV_ITEMS = [
 export function AppLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { logout } = useAuthMutations();
   const { data: user } = useGetMe();
-
-  const handleLogout = () => {
-    logout.mutate();
-  };
 
   const SidebarContent = () => (
     <>
@@ -55,21 +49,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
           );
         })}
       </div>
-      <div className="p-4 border-t border-slate-800">
-        <button 
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Logout</span>
-        </button>
-      </div>
     </>
   );
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
-      {/* Mobile Backdrop */}
       {mobileOpen && (
         <div 
           className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 lg:hidden animate-in fade-in"
@@ -77,7 +61,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] lg:static lg:translate-x-0 shadow-2xl lg:shadow-none",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -85,7 +68,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <SidebarContent />
       </aside>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center gap-4">
