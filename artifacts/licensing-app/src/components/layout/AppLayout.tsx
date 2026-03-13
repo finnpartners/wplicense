@@ -29,8 +29,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </svg>
         </div>
         <div className="flex flex-col">
-          <span className="font-display font-bold text-lg text-white tracking-wide leading-tight">FINN</span>
-          <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold leading-tight">Licensing</span>
+          <span className="font-display font-bold text-lg text-white tracking-wide leading-tight">WP License</span>
+          <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold leading-tight">by Finn Partners</span>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">

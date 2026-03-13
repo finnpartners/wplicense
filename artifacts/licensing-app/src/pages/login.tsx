@@ -53,7 +53,7 @@ export default function Login() {
             </svg>
           </div>
         </div>
-        <h2 className="text-3xl font-display font-bold text-slate-950 mb-2 text-center">FINN Licensing</h2>
+        <h2 className="text-3xl font-display font-bold text-slate-950 mb-2 text-center">WP License</h2>
         <p className="text-slate-500 mb-8 text-center">Sign in to continue</p>
 
         {!error && (
