@@ -252,6 +252,7 @@ export default function Clients() {
                 <TableHead>Key</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Domain</TableHead>
+                <TableHead>Updates</TableHead>
                 <TableHead>Access</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
@@ -259,7 +260,14 @@ export default function Clients() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {licenses?.map((license) => (
+              {licenses?.map((license) => {
+                const domainEntries = domainPlugins?.filter(dp => dp.domain === license.domain) ?? [];
+                const outdatedCount = domainEntries.filter(
+                  dp => dp.currentVersion && dp.latestVersion && dp.currentVersion !== dp.latestVersion
+                ).length;
+                const totalTracked = domainEntries.length;
+
+                return (
                 <TableRow key={license.id}>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
@@ -280,6 +288,40 @@ export default function Clients() {
                     <a href={`https://${license.domain}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 hover:underline">{license.domain}</a>
                   </TableCell>
                   <TableCell>
+                    {totalTracked === 0 ? (
+                      <button
+                        onClick={() => openDomainPlugins(license.domain)}
+                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-slate-50 text-slate-400 text-xs font-medium hover:bg-slate-100 transition-colors"
+                      >
+                        No data
+                      </button>
+                    ) : outdatedCount === 0 ? (
+                      <button
+                        onClick={() => openDomainPlugins(license.domain)}
+                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        All up to date
+                      </button>
+                    ) : outdatedCount <= 2 ? (
+                      <button
+                        onClick={() => openDomainPlugins(license.domain)}
+                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        {outdatedCount} outdated
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openDomainPlugins(license.domain)}
+                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-medium hover:bg-rose-100 transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                        {outdatedCount} outdated
+                      </button>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Badge variant={license.pluginAccess === "all" ? "secondary" : "outline"} className="text-xs">
                       {license.pluginAccess === "all" ? "All Plugins" : "Specific"}
                     </Badge>
@@ -292,14 +334,6 @@ export default function Clients() {
                   <TableCell className="text-slate-500 text-xs">{formatDate(license.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openDomainPlugins(license.domain)}
-                        title="View plugin versions"
-                      >
-                        <Monitor className="w-4 h-4 text-slate-500" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -325,7 +359,8 @@ export default function Clients() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}
