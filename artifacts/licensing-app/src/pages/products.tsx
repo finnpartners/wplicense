@@ -7,6 +7,7 @@ import { z } from "zod";
 import { PageHeader } from "@/components/layout/AppLayout";
 import { useListProducts, getListProductsQueryKey } from "@workspace/api-client-react";
 import { useProductMutations } from "@/hooks/use-api-wrappers";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -42,6 +43,7 @@ export default function Products() {
   const [importOpen, setImportOpen] = useState(false);
   const [pollingAll, setPollingAll] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const handlePollAll = async () => {
     setPollingAll(true);
@@ -50,10 +52,15 @@ export default function Products() {
         method: "POST",
         credentials: "include",
       });
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.success) {
         await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        toast({ title: "All products checked", description: data.message, variant: "success" });
+      } else {
+        toast({ title: "Error", description: data.message || "Failed to check products", variant: "destructive" });
       }
     } catch {
+      toast({ title: "Error", description: "Failed to connect to server", variant: "destructive" });
     } finally {
       setPollingAll(false);
     }
