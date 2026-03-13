@@ -113,24 +113,20 @@ export default function Products() {
         description="Register repositories to distribute"
         action={
           <div className="flex items-center gap-2">
-            {isAdmin && (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={handlePollAll}
-                  disabled={pollingAll}
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${pollingAll ? 'animate-spin' : ''}`} />
-                  {pollingAll ? "Checking..." : "Check All"}
-                </Button>
-                <Button variant="outline" onClick={() => setImportOpen(true)}>
-                  <Github className="w-4 h-4 mr-2" /> Import from GitHub
-                </Button>
-                <Button onClick={openCreate}>
-                  <Plus className="w-4 h-4 mr-2" /> Add Product
-                </Button>
-              </>
-            )}
+            <Button
+              variant="outline"
+              onClick={handlePollAll}
+              disabled={!isAdmin || pollingAll}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${pollingAll ? 'animate-spin' : ''}`} />
+              {pollingAll ? "Checking..." : "Check All"}
+            </Button>
+            <Button variant="outline" onClick={() => setImportOpen(true)} disabled={!isAdmin}>
+              <Github className="w-4 h-4 mr-2" /> Import from GitHub
+            </Button>
+            <Button onClick={openCreate} disabled={!isAdmin}>
+              <Plus className="w-4 h-4 mr-2" /> Add Product
+            </Button>
           </div>
         }
       />
@@ -144,14 +140,12 @@ export default function Products() {
           </div>
           <h3 className="text-xl font-display font-bold text-slate-900">No products found</h3>
           <p className="text-slate-500 max-w-sm mx-auto mt-2 mb-8">Register a GitHub repository to distribute as a licensed WordPress plugin.</p>
-          {isAdmin && (
-            <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" onClick={() => setImportOpen(true)}>
-                <Github className="w-4 h-4 mr-2" /> Import from GitHub
-              </Button>
-              <Button onClick={openCreate}>Add Manually</Button>
-            </div>
-          )}
+          <div className="flex items-center justify-center gap-3">
+            <Button variant="outline" onClick={() => setImportOpen(true)} disabled={!isAdmin}>
+              <Github className="w-4 h-4 mr-2" /> Import from GitHub
+            </Button>
+            <Button onClick={openCreate} disabled={!isAdmin}>Add Manually</Button>
+          </div>
         </div>
       ) : (
         <Table>
@@ -194,26 +188,22 @@ export default function Products() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {isAdmin && (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => poll.mutate({ id: product.id })}
-                          disabled={poll.isPending && poll.variables?.id === product.id}
-                          className="h-8 px-3"
-                        >
-                          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${poll.isPending && poll.variables?.id === product.id ? 'animate-spin' : ''}`} />
-                          Check Now
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(product)}>
-                          <Edit2 className="w-4 h-4 text-slate-500" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(product.id)}>
-                          <Trash2 className="w-4 h-4 text-rose-500" />
-                        </Button>
-                      </>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => poll.mutate({ id: product.id })}
+                      disabled={!isAdmin || (poll.isPending && poll.variables?.id === product.id)}
+                      className="h-8 px-3"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${poll.isPending && poll.variables?.id === product.id ? 'animate-spin' : ''}`} />
+                      Check Now
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(product)} disabled={!isAdmin}>
+                      <Edit2 className="w-4 h-4 text-slate-500" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(product.id)} disabled={!isAdmin}>
+                      <Trash2 className="w-4 h-4 text-rose-500" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

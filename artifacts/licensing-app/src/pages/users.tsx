@@ -73,29 +73,28 @@ export default function UsersPage() {
         Users with the <Badge variant="default" className="mx-1">admin</Badge> role can add, edit, and delete products, clients, and licenses. Everyone else can view but not modify data.
       </p>
 
-      {isAdmin && (
-        <div className="flex items-center gap-2 mb-6">
-          <Input
-            placeholder="user@finnpartners.com"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
-            className="flex-1"
-          />
-          <Select value={newRole} onValueChange={setNewRole}>
-            <SelectTrigger className="w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="viewer">Viewer</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={handleAdd} disabled={saving || !newEmail.trim()}>
-            <Plus className="w-4 h-4 mr-1" /> Add
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center gap-2 mb-6">
+        <Input
+          placeholder="user@finnpartners.com"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+          className="flex-1"
+          disabled={!isAdmin}
+        />
+        <Select value={newRole} onValueChange={setNewRole} disabled={!isAdmin}>
+          <SelectTrigger className="w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="viewer">Viewer</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button onClick={handleAdd} disabled={!isAdmin || saving || !newEmail.trim()}>
+          <Plus className="w-4 h-4 mr-1" /> Add
+        </Button>
+      </div>
 
       {isLoading ? (
         <div className="animate-pulse h-48 bg-white rounded-2xl border border-slate-200"></div>
@@ -113,7 +112,7 @@ export default function UsersPage() {
             <TableRow>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              {isAdmin && <TableHead className="w-16"></TableHead>}
+              <TableHead className="w-16"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -125,13 +124,11 @@ export default function UsersPage() {
                     {r.role}
                   </Badge>
                 </TableCell>
-                {isAdmin && (
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(r.id)}>
-                      <Trash2 className="w-4 h-4 text-rose-500" />
-                    </Button>
-                  </TableCell>
-                )}
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" onClick={() => setDeleteId(r.id)} disabled={!isAdmin}>
+                    <Trash2 className="w-4 h-4 text-rose-500" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
