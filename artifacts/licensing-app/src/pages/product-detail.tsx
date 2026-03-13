@@ -81,7 +81,7 @@ export default function ProductDetail() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <InfoCard icon={<Tag className="w-5 h-5 text-indigo-500" />} label="Latest Version" value={product.latestVersion || "—"} />
-        <InfoCard icon={<Github className="w-5 h-5 text-slate-700" />} label="Repository" value={product.githubRepo} />
+        <InfoCard icon={<Github className="w-5 h-5 text-slate-700" />} label="Repository" value={product.githubRepo} href={`https://github.com/${product.githubRepo}`} />
         <InfoCard icon={<Calendar className="w-5 h-5 text-amber-500" />} label="Last Release" value={formatDate(product.releaseDate)} />
         <InfoCard icon={<RefreshCw className="w-5 h-5 text-emerald-500" />} label="Last Checked" value={formatDate(product.lastChecked)} />
       </div>
@@ -193,14 +193,18 @@ export default function ProductDetail() {
   );
 }
 
-function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function InfoCard({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href?: string }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-4">
       <div className="flex items-center gap-2 mb-1">
         {icon}
         <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</span>
       </div>
-      <p className="text-sm font-semibold text-slate-900 truncate">{value}</p>
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-slate-900 truncate block hover:text-indigo-600 transition-colors">{value}</a>
+      ) : (
+        <p className="text-sm font-semibold text-slate-900 truncate">{value}</p>
+      )}
     </div>
   );
 }
