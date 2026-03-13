@@ -103,6 +103,48 @@ async function upsertRelease(productId: number, release: GitHubRelease): Promise
   }
 }
 
+const POLL_INTERVAL_MS = 24 * 60 * 60 * 1000;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+export async function pollAllProducts(): Promise<void> {
+  const products = await db.select({ id: productsTable.id, name: productsTable.name })
+    .from(productsTable);
+
+  if (products.length === 0) {
+    console.log("[Poller] No products to poll");
+    return;
+  }
+
+  console.log(`[Poller] Polling ${products.length} product(s) for new releases...`);
+
+  for (const product of products) {
+    try {
+      const result = await pollProduct(product.id);
+      if (result.success) {
+        console.log(`[Poller] ${product.name}: ${result.message}`);
+      }
+    } catch (err) {
+      console.error(`[Poller] Error polling ${product.name}:`, err);
+    }
+  }
+
+  console.log("[Poller] Daily poll complete");
+}
+
+export function startDailyPoller(): void {
+  if (pollTimer) return;
+
+  setTimeout(() => {
+    pollAllProducts().catch((err) => console.error("[Poller] Initial poll failed:", err));
+  }, 30_000);
+
+  pollTimer = setInterval(() => {
+    pollAllProducts().catch((err) => console.error("[Poller] Scheduled poll failed:", err));
+  }, POLL_INTERVAL_MS);
+
+  console.log("[Poller] Daily release poller started (every 24h)");
+}
+
 export async function pollProduct(productId: number): Promise<{ success: boolean; message: string }> {
   const [product] = await db.select().from(productsTable).where(eq(productsTable.id, productId));
   if (!product) {
