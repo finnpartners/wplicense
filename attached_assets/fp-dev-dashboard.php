@@ -2,7 +2,7 @@
 /**
  * Plugin Name: FINN DEV Dashboard
  * Description: Central dashboard for managing and updating internal Finn Partners plugins via FINN Licensing API.
- * Version: 3.0.0
+ * Version: 2.0.0
  * Author: Finn Partners
  * Author URI: https://finnpartners.com/
  * Requires PHP: 8.0
