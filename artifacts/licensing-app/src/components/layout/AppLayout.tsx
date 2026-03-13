@@ -6,8 +6,8 @@ import { useGetMe } from "@workspace/api-client-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/products", label: "Products", icon: Package },
   { href: "/clients", label: "Clients", icon: Users },
+  { href: "/products", label: "Products", icon: Package },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
