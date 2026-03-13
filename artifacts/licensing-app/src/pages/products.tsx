@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, Package, RefreshCw, Github, Search, Lock, Check } from "lucide-react";
+import { Plus, Edit2, Trash2, Package, RefreshCw, Github, Search, Lock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -267,8 +267,10 @@ function ImportGitHubDialog({
     }
   }, [open, hasFetched, fetchRepos]);
 
+  const available = allRepos.filter((r) => !r.alreadyAdded);
+
   const filtered = search
-    ? allRepos.filter((r) => {
+    ? available.filter((r) => {
         const q = search.toLowerCase();
         return (
           r.fullName.toLowerCase().includes(q) ||
@@ -276,7 +278,7 @@ function ImportGitHubDialog({
           (r.description && r.description.toLowerCase().includes(q))
         );
       })
-    : allRepos;
+    : available;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -327,21 +329,15 @@ function ImportGitHubDialog({
                     <p className="text-xs text-slate-500 mt-0.5 truncate ml-6">{repo.description}</p>
                   )}
                 </div>
-                {repo.alreadyAdded ? (
-                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0">
-                    <Check className="w-3.5 h-3.5" /> Added
-                  </span>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0 h-7 px-3 text-xs"
-                    onClick={() => onImport(repo)}
-                    disabled={importing}
-                  >
-                    Import
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 h-7 px-3 text-xs"
+                  onClick={() => onImport(repo)}
+                  disabled={importing}
+                >
+                  Import
+                </Button>
               </div>
             ))}
           </div>

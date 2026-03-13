@@ -30,8 +30,14 @@ router.post("/admin/products", async (req, res) => {
       return;
     }
 
-    const existing = await db.select({ id: productsTable.id }).from(productsTable).where(eq(productsTable.slug, parsed.data.slug));
-    if (existing.length > 0) {
+    const [existingByRepo] = await db.select().from(productsTable).where(eq(productsTable.githubRepo, parsed.data.githubRepo));
+    if (existingByRepo) {
+      res.status(200).json(existingByRepo);
+      return;
+    }
+
+    const [existingBySlug] = await db.select({ id: productsTable.id }).from(productsTable).where(eq(productsTable.slug, parsed.data.slug));
+    if (existingBySlug) {
       res.status(400).json({ message: "A product with this slug already exists" });
       return;
     }
