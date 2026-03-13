@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight, Monitor } from "lucide-react";
@@ -61,6 +62,8 @@ export default function Clients() {
   const [copied, setCopied] = useState<string | null>(null);
   const [domainPluginsOpen, setDomainPluginsOpen] = useState(false);
   const [domainPluginsDomain, setDomainPluginsDomain] = useState<string | null>(null);
+  const [deleteClientId, setDeleteClientId] = useState<number | null>(null);
+  const [deleteLicenseId, setDeleteLicenseId] = useState<number | null>(null);
 
   const { data: domainPlugins } = useQuery<DomainPlugin[]>({
     queryKey: ["domain-plugins"],
@@ -210,11 +213,7 @@ export default function Clients() {
                     <Button variant="ghost" size="icon" onClick={() => openEditClient(client)}>
                       <Edit2 className="w-4 h-4 text-slate-500" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => {
-                      if (confirm("Delete this client? Existing licenses will become unassigned.")) {
-                        clientMutations.remove.mutate({ id: client.id });
-                      }
-                    }}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteClientId(client.id)}>
                       <Trash2 className="w-4 h-4 text-rose-500" />
                     </Button>
                   </div>
@@ -349,11 +348,7 @@ export default function Clients() {
                       <Button variant="ghost" size="icon" onClick={() => openEditLicense(license)}>
                         <Edit2 className="w-4 h-4 text-slate-500" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => {
-                        if (confirm("Delete this license? This cannot be undone.")) {
-                          licenseMutations.remove.mutate({ id: license.id });
-                        }
-                      }}>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteLicenseId(license.id)}>
                         <Trash2 className="w-4 h-4 text-rose-500" />
                       </Button>
                     </div>
@@ -584,6 +579,26 @@ export default function Clients() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteClientId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteClientId(null); }}
+        title="Delete Client"
+        description="Are you sure you want to delete this client? Existing licenses will become unassigned."
+        confirmLabel="Delete Client"
+        onConfirm={() => { if (deleteClientId) clientMutations.remove.mutate({ id: deleteClientId }); }}
+        loading={clientMutations.remove.isPending}
+      />
+
+      <ConfirmDialog
+        open={deleteLicenseId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteLicenseId(null); }}
+        title="Delete License"
+        description="Are you sure you want to delete this license? This action cannot be undone and the license key will stop working immediately."
+        confirmLabel="Delete License"
+        onConfirm={() => { if (deleteLicenseId) licenseMutations.remove.mutate({ id: deleteLicenseId }); }}
+        loading={licenseMutations.remove.isPending}
+      />
     </div>
   );
 }

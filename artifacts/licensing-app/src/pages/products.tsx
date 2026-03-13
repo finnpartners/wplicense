@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit2, Trash2, Package, RefreshCw, Github, Search, Lock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
@@ -41,6 +42,7 @@ export default function Products() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [pollingAll, setPollingAll] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -197,11 +199,7 @@ export default function Products() {
                     <Button variant="ghost" size="icon" onClick={() => openEdit(product)}>
                       <Edit2 className="w-4 h-4 text-slate-500" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => {
-                      if(confirm("Delete this product? Licenses tied specifically to this product will become unrestricted.")) {
-                        remove.mutate({ id: product.id });
-                      }
-                    }}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(product.id)}>
                       <Trash2 className="w-4 h-4 text-rose-500" />
                     </Button>
                   </div>
@@ -248,6 +246,16 @@ export default function Products() {
         onOpenChange={setImportOpen}
         onImport={handleImport}
         importing={create.isPending}
+      />
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteId(null); }}
+        title="Delete Product"
+        description="Are you sure you want to delete this product? All associated releases will be removed, and licenses tied specifically to this product will become unrestricted."
+        confirmLabel="Delete Product"
+        onConfirm={() => { if (deleteId) remove.mutate({ id: deleteId }); }}
+        loading={remove.isPending}
       />
     </div>
   );
