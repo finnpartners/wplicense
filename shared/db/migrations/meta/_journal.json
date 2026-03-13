@@ -15,6 +15,13 @@
       "when": 1773390750066,
       "tag": "0001_classy_owl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773407093025,
+      "tag": "0002_wakeful_annihilus",
+      "breakpoints": true
     }
   ]
 }

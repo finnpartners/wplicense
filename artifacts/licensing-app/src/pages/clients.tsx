@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight, Monitor } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { useIsAdmin } from "@/hooks/use-role";
 import { useQuery } from "@tanstack/react-query";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -51,6 +52,7 @@ export default function Clients() {
   const { data: licenses, isLoading: licensesLoading } = useListLicenses();
   const { data: products } = useListProducts();
   const clientMutations = useClientMutations();
+  const isAdmin = useIsAdmin();
 
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [editingClientId, setEditingClientId] = useState<number | null>(null);
@@ -168,7 +170,7 @@ export default function Clients() {
       <PageHeader
         title="Clients"
         description="Manage clients and their license keys"
-        action={<Button onClick={openCreateClient}><Plus className="w-4 h-4 mr-2" /> Add Client</Button>}
+        action={isAdmin ? <Button onClick={openCreateClient}><Plus className="w-4 h-4 mr-2" /> Add Client</Button> : undefined}
       />
 
       {clientsLoading ? (
@@ -180,7 +182,7 @@ export default function Clients() {
           </div>
           <h3 className="text-xl font-display font-bold text-slate-900">No clients found</h3>
           <p className="text-slate-500 max-w-sm mx-auto mt-2 mb-8">Add a client to start issuing licenses.</p>
-          <Button onClick={openCreateClient}>Add First Client</Button>
+          {isAdmin && <Button onClick={openCreateClient}>Add First Client</Button>}
         </div>
       ) : (
         <Table>
@@ -208,16 +210,18 @@ export default function Clients() {
                   </span>
                 </TableCell>
                 <TableCell className="text-slate-500 text-xs">{formatDate(client.createdAt)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEditClient(client)}>
-                      <Edit2 className="w-4 h-4 text-slate-500" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteClientId(client.id)}>
-                      <Trash2 className="w-4 h-4 text-rose-500" />
-                    </Button>
-                  </div>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEditClient(client)}>
+                        <Edit2 className="w-4 h-4 text-slate-500" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteClientId(client.id)}>
+                        <Trash2 className="w-4 h-4 text-rose-500" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -230,7 +234,7 @@ export default function Clients() {
             <h2 className="text-2xl font-display font-bold text-slate-950 tracking-tight">Licenses</h2>
             <p className="text-slate-500 mt-1">Issue and manage license keys</p>
           </div>
-          <Button onClick={() => openCreateLicense()}><Plus className="w-4 h-4 mr-2" /> Issue License</Button>
+          {isAdmin && <Button onClick={() => openCreateLicense()}><Plus className="w-4 h-4 mr-2" /> Issue License</Button>}
         </div>
 
         {licensesLoading ? (
@@ -242,7 +246,7 @@ export default function Clients() {
             </div>
             <h3 className="text-lg font-bold text-slate-900">No licenses issued</h3>
             <p className="text-slate-500 max-w-sm mx-auto mt-2 mb-6">Create a license to authorize a client domain.</p>
-            <Button onClick={() => openCreateLicense()}>Issue First License</Button>
+            {isAdmin && <Button onClick={() => openCreateLicense()}>Issue First License</Button>}
           </div>
         ) : (
           <Table>
@@ -333,24 +337,28 @@ export default function Clients() {
                   <TableCell className="text-slate-500 text-xs">{formatDate(license.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => licenseMutations.toggle.mutate({ id: license.id })}
-                        title={license.status === "active" ? "Revoke" : "Activate"}
-                      >
-                        {license.status === "active" ? (
-                          <ToggleRight className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <ToggleLeft className="w-4 h-4 text-slate-400" />
-                        )}
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditLicense(license)}>
-                        <Edit2 className="w-4 h-4 text-slate-500" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteLicenseId(license.id)}>
-                        <Trash2 className="w-4 h-4 text-rose-500" />
-                      </Button>
+                      {isAdmin && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => licenseMutations.toggle.mutate({ id: license.id })}
+                            title={license.status === "active" ? "Revoke" : "Activate"}
+                          >
+                            {license.status === "active" ? (
+                              <ToggleRight className="w-4 h-4 text-emerald-600" />
+                            ) : (
+                              <ToggleLeft className="w-4 h-4 text-slate-400" />
+                            )}
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => openEditLicense(license)}>
+                            <Edit2 className="w-4 h-4 text-slate-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteLicenseId(license.id)}>
+                            <Trash2 className="w-4 h-4 text-rose-500" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

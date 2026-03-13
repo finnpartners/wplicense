@@ -46,6 +46,8 @@ Full-stack web application for managing WordPress plugin licenses. Built with Re
 
 Azure Easy Auth is set to "Allow unauthenticated access" so public API endpoints are reachable by WordPress plugins. The app handles auth itself: admin routes check the `x-ms-client-principal` base64 token (preferred) or fallback to `x-ms-client-principal-id`/`x-ms-client-principal-name` headers, and restrict access to allowed email domains (default: `finnpartners.com`). The frontend redirects unauthenticated users to `/.auth/login/aad` in production. In development, a dev-login bypass creates a local session.
 
+**Role-Based Access Control**: Two roles exist — "admin" (full CRUD access) and "viewer" (read-only). Roles are stored in the `finn_user_roles` table. If no admin users exist in the table, all authenticated users are treated as admin (bootstrap mode). Once the first admin is added, only users with an explicit "admin" role can perform write operations. The Settings page includes a User Roles management card for admins.
+
 ## Structure
 
 ```text
@@ -66,7 +68,7 @@ artifacts-monorepo/
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-│       └── src/schema/     # clients, products, releases, licenses, sessions, domain-plugins
+│       └── src/schema/     # clients, products, releases, licenses, sessions, domain-plugins, user-roles
 ├── attached_assets/        # WordPress plugin + docs for external use
 │   ├── fp-dev-dashboard.php           # FINN DEV Dashboard WordPress plugin (v2.0.0)
 │   └── fp-dev-dashboard-README.md     # Setup & usage docs for the WordPress plugin
@@ -82,6 +84,7 @@ artifacts-monorepo/
 - `finn_releases` — Release history per product (version, tagName, changelog, download URLs, publishedAt)
 - `finn_licenses` — License keys (UUID key, domain, client ref, plugin access, status)
 - `finn_domain_plugins` — Plugin version tracking per domain (domain, productId, currentVersion, lastCheckedAt)
+- `finn_user_roles` — User role assignments (email, role: "admin" | "viewer")
 - `finn_sessions` — Session store (connect-pg-simple)
 
 ## API Routes
@@ -91,10 +94,15 @@ artifacts-monorepo/
 - `POST /api/auth/dev-login` — Dev-only session bypass (403 in production)
 - `POST /api/auth/logout` — Destroy session
 
-### Admin (require auth + CSRF)
+### Admin (require auth; write operations require admin role)
 - `GET /api/admin/dashboard` — Stats
 - `GET /api/admin/api-key` — Returns the configured FINN API Key
-- CRUD: `/api/admin/clients`, `/api/admin/products`, `/api/admin/licenses`
+- `GET /api/admin/my-role` — Returns the current user's role ("admin" or "viewer")
+- `GET /api/admin/user-roles` — List all user role assignments
+- `POST /api/admin/user-roles` — Add/update a user role (admin only)
+- `DELETE /api/admin/user-roles/:id` — Remove a user role (admin only)
+- `GET /api/admin/github-status` — Check GitHub PAT status and rate limits
+- CRUD: `/api/admin/clients`, `/api/admin/products`, `/api/admin/licenses` (GET: all users; POST/PUT/DELETE: admin only)
 - `GET /api/admin/products/:id/releases` — List all releases for a product
 - `POST /api/admin/products/:id/poll` — Poll GitHub for all releases and sync
 - `POST /api/admin/products/poll-all` — Poll all products for new GitHub releases
