@@ -1,10 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+const IS_PRODUCTION = import.meta.env.PROD;
 
 export default function Login() {
   const [error, setError] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+
+  useEffect(() => {
+    if (IS_PRODUCTION) {
+      setRedirecting(true);
+      window.location.href = "/.auth/login/aad?post_login_redirect_uri=" + encodeURIComponent(window.location.origin + "/");
+    }
+  }, []);
 
   const handleDevLogin = async () => {
     try {
@@ -21,6 +30,17 @@ export default function Login() {
       setError(true);
     }
   };
+
+  if (redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-500">Redirecting to sign in...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
