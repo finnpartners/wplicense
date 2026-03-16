@@ -21,7 +21,6 @@ import { formatDate } from "@/lib/utils";
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
   slug: z.string().min(1, "Slug is required"),
   githubRepo: z.string().min(1, "GitHub Repo is required"),
 });
@@ -76,14 +75,13 @@ export default function Products() {
 
   const openCreate = () => {
     setEditingId(null);
-    reset({ name: "", slug: "", githubRepo: "" });
+    reset({ slug: "", githubRepo: "" });
     setDialogOpen(true);
   };
 
   const openEdit = (product: any) => {
     setEditingId(product.id);
     reset({
-      name: product.name,
       slug: product.slug,
       githubRepo: product.githubRepo,
     });
@@ -101,7 +99,7 @@ export default function Products() {
   const handleImport = (repo: GitHubRepo) => {
     const slug = repo.name.toLowerCase().replace(/[^a-z0-9-]/g, "-");
     create.mutate(
-      { data: { name: repo.name, slug, githubRepo: repo.fullName } },
+      { data: { slug, githubRepo: repo.fullName } },
       { onSuccess: () => setImportOpen(false) }
     );
   };
@@ -218,15 +216,10 @@ export default function Products() {
             <DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Name *</label>
-                <Input {...register("name")} placeholder="My Awesome Plugin" className={errors.name ? "border-rose-300" : ""} />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Slug *</label>
-                <Input {...register("slug")} placeholder="my-awesome-plugin" className={errors.slug ? "border-rose-300" : ""} />
-              </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Slug *</label>
+              <Input {...register("slug")} placeholder="my-awesome-plugin" className={errors.slug ? "border-rose-300" : ""} />
+              <p className="text-xs text-slate-500 mt-1">Used as the product name and unique identifier.</p>
             </div>
             
             <div>

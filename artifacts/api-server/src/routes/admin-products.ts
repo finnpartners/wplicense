@@ -21,7 +21,7 @@ router.post("/admin/products", async (req, res) => {
   try {
     const parsed = CreateProductBody.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ message: "Name, slug, and GitHub repo are required" });
+      res.status(400).json({ message: "Slug and GitHub repo are required" });
       return;
     }
 
@@ -43,7 +43,7 @@ router.post("/admin/products", async (req, res) => {
     }
 
     const [product] = await db.insert(productsTable).values({
-      name: parsed.data.name,
+      name: parsed.data.name || parsed.data.slug,
       slug: parsed.data.slug,
       githubRepo: parsed.data.githubRepo,
       description: parsed.data.description ?? null,
@@ -90,7 +90,7 @@ router.put("/admin/products/:id", async (req, res) => {
 
     const parsed = UpdateProductBody.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ message: "Name, slug, and GitHub repo are required" });
+      res.status(400).json({ message: "Slug and GitHub repo are required" });
       return;
     }
 
@@ -107,7 +107,7 @@ router.put("/admin/products/:id", async (req, res) => {
     }
 
     const [updated] = await db.update(productsTable).set({
-      name: parsed.data.name,
+      name: parsed.data.name || parsed.data.slug,
       slug: parsed.data.slug,
       githubRepo: parsed.data.githubRepo,
       description: parsed.data.description ?? null,

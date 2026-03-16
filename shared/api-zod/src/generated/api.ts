@@ -134,7 +134,7 @@ export const ListProductsResponse = zod.array(ListProductsResponseItem);
  * @summary Create a product
  */
 export const CreateProductBody = zod.object({
-  name: zod.string(),
+  name: zod.string().nullish(),
   slug: zod.string(),
   githubRepo: zod.string(),
   description: zod.string().nullish(),
@@ -175,7 +175,7 @@ export const UpdateProductParams = zod.object({
 });
 
 export const UpdateProductBody = zod.object({
-  name: zod.string(),
+  name: zod.string().nullish(),
   slug: zod.string(),
   githubRepo: zod.string(),
   description: zod.string().nullish(),

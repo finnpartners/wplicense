@@ -65,7 +65,7 @@ export interface Product {
 }
 
 export interface ProductInput {
-  name: string;
+  name?: string | null;
   slug: string;
   githubRepo: string;
   description?: string | null;
