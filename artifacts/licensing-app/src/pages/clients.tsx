@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight, Monitor, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit2, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight, Monitor, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/use-role";
 import { useQuery } from "@tanstack/react-query";
@@ -95,7 +95,7 @@ export default function Clients() {
     if (licensePage >= licensePageCount) setLicensePage(Math.max(0, licensePageCount - 1));
   }, [licensePage, licensePageCount]);
 
-  const { data: domainPlugins } = useQuery<DomainPlugin[]>({
+  const { data: domainPlugins, refetch: refetchDomainPlugins, isFetching: domainPluginsFetching } = useQuery<DomainPlugin[]>({
     queryKey: ["domain-plugins"],
     queryFn: () => fetch(`${BASE}/api/admin/domain-plugins`, { credentials: "include" }).then(r => r.json()),
   });
@@ -583,40 +583,55 @@ export default function Clients() {
       <Dialog open={domainPluginsOpen} onOpenChange={setDomainPluginsOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Plugin Versions — {domainPluginsDomain}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Plugin Versions — {domainPluginsDomain}</DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={() => refetchDomainPlugins()}
+                disabled={domainPluginsFetching}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${domainPluginsFetching ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
           </DialogHeader>
           <div className="mt-2">
             {filteredDomainPlugins.length === 0 ? (
               <div className="text-center py-8">
                 <Monitor className="w-8 h-8 text-slate-300 mx-auto mb-3" />
                 <p className="text-sm text-slate-500">No plugin version data yet.</p>
-                <p className="text-xs text-slate-400 mt-1">Data is collected when the site checks for updates.</p>
+                <p className="text-xs text-slate-400 mt-1">Version data is reported automatically when the site checks for updates.</p>
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
-                {filteredDomainPlugins.map((dp) => (
-                  <div key={dp.id} className="flex items-center justify-between px-4 py-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-slate-900">{dp.productName || dp.productSlug}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">Last checked {formatDate(dp.lastCheckedAt)}</div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        v{dp.currentVersion}
-                      </Badge>
-                      {dp.latestVersion && dp.currentVersion && dp.currentVersion !== dp.latestVersion ? (
-                        <Badge variant="destructive" className="text-xs">
-                          Update available: {dp.latestVersion}
+              <>
+                <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
+                  {filteredDomainPlugins.map((dp) => (
+                    <div key={dp.id} className="flex items-center justify-between px-4 py-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-slate-900">{dp.productName || dp.productSlug}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">Last reported {formatDate(dp.lastCheckedAt)}</div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant="outline" className="font-mono text-xs">
+                          v{dp.currentVersion}
                         </Badge>
-                      ) : dp.latestVersion && dp.currentVersion === dp.latestVersion ? (
-                        <Badge variant="default" className="text-xs">
-                          Up to date
-                        </Badge>
-                      ) : null}
+                        {dp.latestVersion && dp.currentVersion && dp.currentVersion !== dp.latestVersion ? (
+                          <Badge variant="destructive" className="text-xs">
+                            Update available: {dp.latestVersion}
+                          </Badge>
+                        ) : dp.latestVersion && dp.currentVersion === dp.latestVersion ? (
+                          <Badge variant="default" className="text-xs">
+                            Up to date
+                          </Badge>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 mt-3 text-center">Versions are reported by the site when it checks for updates.</p>
+              </>
             )}
           </div>
         </DialogContent>
