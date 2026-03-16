@@ -583,26 +583,27 @@ export default function Clients() {
       <Dialog open={domainPluginsOpen} onOpenChange={setDomainPluginsOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>Plugin Versions — {domainPluginsDomain}</DialogTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5"
-                onClick={() => refetchDomainPlugins()}
-                disabled={domainPluginsFetching}
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${domainPluginsFetching ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-            </div>
+            <DialogTitle>Plugin Versions — {domainPluginsDomain}</DialogTitle>
           </DialogHeader>
-          <div className="mt-2">
+          <div className="flex items-center justify-between mt-1 mb-2">
+            <p className="text-xs text-slate-400">Versions reported by the site when it checks for updates.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-xs shrink-0"
+              onClick={() => refetchDomainPlugins()}
+              disabled={domainPluginsFetching}
+            >
+              <RefreshCw className={`w-3 h-3 ${domainPluginsFetching ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+          <div>
             {filteredDomainPlugins.length === 0 ? (
               <div className="text-center py-8">
                 <Monitor className="w-8 h-8 text-slate-300 mx-auto mb-3" />
                 <p className="text-sm text-slate-500">No plugin version data yet.</p>
-                <p className="text-xs text-slate-400 mt-1">Version data is reported automatically when the site checks for updates.</p>
+                <p className="text-xs text-slate-400 mt-1">No update check data has been received from this site yet.</p>
               </div>
             ) : (
               <>
@@ -630,7 +631,6 @@ export default function Clients() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-slate-400 mt-3 text-center">Versions are reported by the site when it checks for updates.</p>
               </>
             )}
           </div>
