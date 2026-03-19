@@ -2,7 +2,7 @@
 /**
  * Plugin Name: FINN DEV Dashboard
  * Description: Central dashboard for managing and updating internal Finn Partners plugins via FINN Licensing API.
- * Version: 2.0.3
+ * Version: 2.0.2
  * Author: Finn Partners
  * Author URI: https://finnpartners.com/
  * Requires PHP: 8.0
@@ -37,47 +37,6 @@ class FP_Dev_Dashboard {
 
         add_action( 'admin_init', [ $this, 'trigger_manual_heartbeat' ] );
         add_action( 'admin_notices', [ $this, 'show_license_notice' ] );
-
-        add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
-    }
-
-    public function register_rest_routes() {
-        register_rest_route( 'fp-dev/v1', '/status', [
-            'methods'             => 'GET',
-            'callback'            => [ $this, 'rest_status' ],
-            'permission_callback' => [ $this, 'rest_status_permission' ],
-        ]);
-    }
-
-    public function rest_status_permission( $request ) {
-        $token = $request->get_header( 'X-License-Key' );
-        if ( empty( $token ) ) return new WP_Error( 'unauthorized', 'Missing license key', [ 'status' => 401 ] );
-
-        $settings = $this->get_settings();
-        if ( empty( $settings['license_key'] ) || ! hash_equals( $settings['license_key'], $token ) ) {
-            return new WP_Error( 'forbidden', 'Invalid license key', [ 'status' => 403 ] );
-        }
-        return true;
-    }
-
-    public function rest_status( $request ) {
-        $all_plugins = get_plugins();
-        $plugins = [];
-
-        foreach ( $all_plugins as $file => $data ) {
-            if ( ! $this->is_finn_plugin( $file ) ) continue;
-            $slug = $this->get_plugin_slug( $file );
-            $plugins[] = [
-                'slug'    => $slug,
-                'version' => $data['Version'],
-                'active'  => is_plugin_active( $file ),
-            ];
-        }
-
-        return rest_ensure_response([
-            'domain'  => $this->get_fingerprint(),
-            'plugins' => $plugins,
-        ]);
     }
 
     private function get_plugin_slug( string $file ): string {

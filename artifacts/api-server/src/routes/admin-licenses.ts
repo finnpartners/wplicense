@@ -254,7 +254,7 @@ router.post("/admin/ping-site", async (req, res) => {
     }
 
     if (!siteData || !Array.isArray(siteData.plugins)) {
-      res.status(502).json({ message: "Could not reach the site. Ensure the FP Dev Dashboard plugin (v2.1.0+) is active." });
+      res.status(502).json({ message: "Could not reach the site. Ensure the FP Dev Dashboard plugin (v2.0.3+) is active." });
       return;
     }
 
