@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { licensesTable, clientsTable, domainPluginsTable, productsTable } from "@workspace/db/schema";
 import type { License } from "@workspace/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { CreateLicenseBody, UpdateLicenseBody, GetLicenseParams, UpdateLicenseParams, DeleteLicenseParams, ToggleLicenseParams } from "@workspace/api-zod";
 import { normaliseDomain } from "../lib/domain";
@@ -210,6 +210,84 @@ router.post("/admin/licenses/:id/toggle", async (req, res) => {
     res.json(formatLicense(updated, client?.name ?? null));
   } catch (err) {
     console.error("Toggle license error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/admin/ping-site", async (req, res) => {
+  try {
+    const { domain } = req.body;
+    if (!domain) {
+      res.status(400).json({ message: "Domain is required" });
+      return;
+    }
+
+    const normalizedDomain = normaliseDomain(domain);
+
+    const licenses = await db
+      .select({ id: licensesTable.id, licenseKey: licensesTable.licenseKey, domain: licensesTable.domain })
+      .from(licensesTable)
+      .where(eq(licensesTable.status, "active"));
+
+    const license = licenses.find(l => normaliseDomain(l.domain) === normalizedDomain);
+    if (!license) {
+      res.status(404).json({ message: "No active license found for this domain" });
+      return;
+    }
+
+    const protocols = ["https", "http"];
+    let siteData: { plugins: { slug: string; version: string; active: boolean }[] } | null = null;
+
+    for (const proto of protocols) {
+      try {
+        const url = `${proto}://${normalizedDomain}/wp-json/fp-dev/v1/status`;
+        const response = await fetch(url, {
+          headers: { "X-License-Key": license.licenseKey, "Accept": "application/json" },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (response.ok) {
+          siteData = await response.json() as typeof siteData;
+          break;
+        }
+      } catch {
+      }
+    }
+
+    if (!siteData || !Array.isArray(siteData.plugins)) {
+      res.status(502).json({ message: "Could not reach the site. Ensure the FP Dev Dashboard plugin (v2.1.0+) is active." });
+      return;
+    }
+
+    const allProducts = await db.select({ id: productsTable.id, slug: productsTable.slug }).from(productsTable);
+    const slugToProduct = new Map(allProducts.map(p => [p.slug, p]));
+
+    let updated = 0;
+    for (const plugin of siteData.plugins) {
+      const product = slugToProduct.get(plugin.slug);
+      if (!product) continue;
+
+      await db.insert(domainPluginsTable)
+        .values({
+          licenseId: license.id,
+          productId: product.id,
+          domain: normalizedDomain,
+          currentVersion: plugin.version,
+          lastCheckedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [domainPluginsTable.licenseId, domainPluginsTable.productId],
+          set: {
+            domain: normalizedDomain,
+            currentVersion: plugin.version,
+            lastCheckedAt: new Date(),
+          },
+        });
+      updated++;
+    }
+
+    res.json({ message: `Pinged ${normalizedDomain} successfully`, pluginsFound: siteData.plugins.length, updated });
+  } catch (err) {
+    console.error("Ping site error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
