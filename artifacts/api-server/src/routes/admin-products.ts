@@ -275,13 +275,14 @@ router.get("/admin/github/repos", async (req, res) => {
       return;
     }
 
+    const forceRefresh = req.query.force === "1";
     const cacheAge = Date.now() - repoCacheTimestamp;
 
-    if (repoCache.length === 0 && !repoCacheFetching) {
+    if (forceRefresh || (repoCache.length === 0 && !repoCacheFetching)) {
       try {
         repoCache = await fetchAllGithubRepos(headers);
         repoCacheTimestamp = Date.now();
-        console.log(`GitHub repo cache populated: ${repoCache.length} repositories`);
+        console.log(`GitHub repo cache refreshed: ${repoCache.length} repositories`);
       } catch {
         res.status(502).json({ message: "Failed to fetch repositories from GitHub" });
         return;

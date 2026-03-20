@@ -273,11 +273,14 @@ function ImportGitHubDialog({
   const [search, setSearch] = useState("");
   const [hasFetched, setHasFetched] = useState(false);
 
-  const fetchRepos = useCallback(async () => {
+  const fetchRepos = useCallback(async (force = false) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BASE}/api/admin/github/repos`, { credentials: "include" });
+      const url = force
+        ? `${BASE}/api/admin/github/repos?force=1`
+        : `${BASE}/api/admin/github/repos`;
+      const res = await fetch(url, { credentials: "include" });
       if (!res.ok) {
         const data = await res.json();
         setError(data.message || "Failed to fetch repositories");
@@ -324,14 +327,26 @@ function ImportGitHubDialog({
           <DialogTitle>Import from GitHub</DialogTitle>
         </DialogHeader>
         <div className="mt-2 min-w-0">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Search repositories..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Search repositories..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 shrink-0"
+              onClick={() => fetchRepos(true)}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
           </div>
 
           <div className="mt-3 max-h-80 overflow-y-auto overflow-x-hidden border border-slate-200 rounded-xl divide-y divide-slate-100">
