@@ -8,11 +8,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
+    "@types/node": "25.6.0",
     "tsx": "catalog:"
   },
   "dependencies": {
     "@workspace/db": "workspace:*",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "0.45.2"
   }
 }
