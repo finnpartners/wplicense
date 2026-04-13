@@ -9,7 +9,7 @@ Full-stack web application for managing WordPress plugin licenses. Built with Re
 - **Monorepo tool**: pnpm workspaces
 - **Node.js version**: 24
 - **Package manager**: pnpm (internal), npm (external/README)
-- **TypeScript version**: 5.9
+- **TypeScript version**: 6.x
 - **Frontend**: React 19 + Vite + Tailwind CSS + shadcn/ui + wouter (routing) + React Query
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM

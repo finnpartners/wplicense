@@ -246,7 +246,7 @@ router.post("/admin/ping-site", async (req, res) => {
           signal: AbortSignal.timeout(10000),
         });
         if (response.ok) {
-          siteData = await response.json() as typeof siteData;
+          siteData = await response.json() as { plugins: { slug: string; version: string; active: boolean }[] };
           break;
         }
       } catch {

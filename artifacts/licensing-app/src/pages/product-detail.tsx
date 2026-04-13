@@ -6,7 +6,8 @@ import { useProductMutations } from "@/hooks/use-api-wrappers";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Github, RefreshCw, Calendar, Tag, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, RefreshCw, Calendar, Tag, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
+import { Github } from "@/components/icons/github";
 import { formatDate } from "@/lib/utils";
 
 function linkifyText(text: string) {

@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, Package, RefreshCw, Github, Search, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, RefreshCw, Search, Lock } from "lucide-react";
+import { Github } from "@/components/icons/github";
 import { formatDate } from "@/lib/utils";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -70,7 +71,7 @@ export default function Products() {
   };
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductForm>({
-    resolver: zodResolver(productSchema)
+    resolver: zodResolver(productSchema) as any
   });
 
   const openCreate = () => {
@@ -197,7 +198,7 @@ export default function Products() {
                       Check Now
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(product)} disabled={!isAdmin}>
-                      <Edit2 className="w-4 h-4 text-slate-500" />
+                      <Pencil className="w-4 h-4 text-slate-500" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => setDeleteId(product.id)} disabled={!isAdmin}>
                       <Trash2 className="w-4 h-4 text-rose-500" />

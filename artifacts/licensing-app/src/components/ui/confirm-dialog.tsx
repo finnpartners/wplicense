@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -27,7 +27,7 @@ export function ConfirmDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 bg-red-100 rounded-full">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <TriangleAlert className="w-5 h-5 text-red-600" />
             </div>
             {title}
           </DialogTitle>

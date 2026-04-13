@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Eye, EyeOff, Github, CircleCheck, CircleX, RefreshCw } from "lucide-react";
+import { Copy, Check, Eye, EyeOff, CircleCheck, CircleX, RefreshCw } from "lucide-react";
+import { Github } from "@/components/icons/github";
 import { useIsAdmin } from "@/hooks/use-role";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");

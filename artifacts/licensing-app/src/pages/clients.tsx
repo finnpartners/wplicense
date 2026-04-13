@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight, Monitor, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Key, Copy, Check, ToggleLeft, ToggleRight, Monitor, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/use-role";
 import { useQuery } from "@tanstack/react-query";
@@ -108,9 +108,11 @@ export default function Clients() {
     setLicenseDialogOpen(false);
   });
 
-  const clientForm = useForm<ClientForm>({ resolver: zodResolver(clientSchema) });
+  const clientForm = useForm<ClientForm>({
+    resolver: zodResolver(clientSchema) as any,
+  });
   const licenseForm = useForm<LicenseForm>({
-    resolver: zodResolver(licenseSchema),
+    resolver: zodResolver(licenseSchema) as any,
     defaultValues: { pluginAccess: "all", productIds: [] },
   });
   const pluginAccess = licenseForm.watch("pluginAccess");
@@ -273,7 +275,7 @@ export default function Clients() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" onClick={() => openEditClient(client)} disabled={!isAdmin}>
-                        <Edit2 className="w-4 h-4 text-slate-500" />
+                        <Pencil className="w-4 h-4 text-slate-500" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => setDeleteClientId(client.id)} disabled={!isAdmin}>
                         <Trash2 className="w-4 h-4 text-rose-500" />
@@ -415,7 +417,7 @@ export default function Clients() {
                         )}
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => openEditLicense(license)} disabled={!isAdmin}>
-                        <Edit2 className="w-4 h-4 text-slate-500" />
+                        <Pencil className="w-4 h-4 text-slate-500" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => setDeleteLicenseId(license.id)} disabled={!isAdmin}>
                         <Trash2 className="w-4 h-4 text-rose-500" />
